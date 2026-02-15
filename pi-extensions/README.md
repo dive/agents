@@ -26,7 +26,8 @@ pi install -l /Users/dive/Projects/dive/agents/pi-extensions
   - dynamic window title
   - animated braille spinner while the agent works
   - native Ghostty progress bar (indeterminate + completion flash)
+  - test command: `/pi-ghostty-test`
 - `pi-notifications` — Ghostty desktop notification when the agent finishes
   - Ghostty-only (no-op on other terminals)
-  - tmux passthrough support
   - notification rate limiting to avoid spam
+  - test command: `/pi-notifications-test`

@@ -1,19 +1,14 @@
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
-import { closeSync, openSync, writeSync } from "node:fs";
 import path from "node:path";
+
+import { createOscWriter, isGhosttyTerminal } from "../_shared/terminal-osc";
 
 const BRAILLE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const SPINNER_INTERVAL_MS = 80;
 const PROGRESS_KEEPALIVE_MS = 1_000;
 const COMPLETION_FLASH_MS = 800;
 
-const OSC = "\x1b]";
-const ST = "\x1b\\"; // String Terminator (preferred for OSC in Ghostty docs)
-
-function isGhosttyTerminal(): boolean {
-  const termProgram = (process.env.TERM_PROGRAM ?? "").toLowerCase();
-  return termProgram === "ghostty";
-}
+type ProgressState = 0 | 1 | 2 | 3 | 4;
 
 function getLastMapKey<K, V>(map: Map<K, V>): K | undefined {
   let key: K | undefined;
@@ -22,7 +17,9 @@ function getLastMapKey<K, V>(map: Map<K, V>): K | undefined {
 }
 
 export default function (pi: ExtensionAPI) {
-  let ttyFd: number | undefined;
+  const ghosttyEnabled = isGhosttyTerminal();
+  const osc = createOscWriter();
+
   let currentModel: string | undefined;
 
   let spinnerTimer: ReturnType<typeof setInterval> | undefined;
@@ -35,7 +32,11 @@ export default function (pi: ExtensionAPI) {
   const activeTools = new Map<string, string>();
   let activeToolCallId: string | undefined;
 
-  const ghosttyEnabled = isGhosttyTerminal();
+  function setGhosttyProgress(state: ProgressState, value?: number) {
+    if (!ghosttyEnabled) return;
+    const payload = value === undefined ? `9;4;${state}` : `9;4;${state};${value}`;
+    osc.writeOsc(payload, "st");
+  }
 
   function clearSpinnerTimer() {
     if (!spinnerTimer) return;
@@ -53,45 +54,6 @@ export default function (pi: ExtensionAPI) {
     if (!completionTimer) return;
     clearTimeout(completionTimer);
     completionTimer = undefined;
-  }
-
-  function ensureTtyFd(): number | undefined {
-    if (ttyFd !== undefined) return ttyFd;
-    try {
-      ttyFd = openSync("/dev/tty", "w");
-      return ttyFd;
-    } catch {
-      return undefined;
-    }
-  }
-
-  function closeTtyFd() {
-    if (ttyFd === undefined) return;
-    try {
-      closeSync(ttyFd);
-    } catch {
-      // ignore close errors
-    }
-    ttyFd = undefined;
-  }
-
-  function writeOsc(payload: string) {
-    if (!ghosttyEnabled) return;
-
-    const fd = ensureTtyFd();
-    if (fd === undefined) return;
-
-    try {
-      writeSync(fd, `${OSC}${payload}${ST}`);
-    } catch {
-      // fd may become invalid when terminal context changes; reopen lazily later
-      closeTtyFd();
-    }
-  }
-
-  function setGhosttyProgress(state: 0 | 1 | 2 | 3 | 4, value?: number) {
-    const payload = value === undefined ? `9;4;${state}` : `9;4;${state};${value}`;
-    writeOsc(payload);
   }
 
   function getActiveToolName(): string | undefined {
@@ -138,8 +100,7 @@ export default function (pi: ExtensionAPI) {
     }, SPINNER_INTERVAL_MS);
     spinnerTimer.unref?.();
 
-    // Ghostty progress bar best-practice: keep progress alive periodically,
-    // otherwise Ghostty resets stale progress after ~15s.
+    // Ghostty resets stale progress after ~15s. Keep alive while working.
     setGhosttyProgress(3);
     progressKeepaliveTimer = setInterval(() => {
       setGhosttyProgress(3);
@@ -159,7 +120,6 @@ export default function (pi: ExtensionAPI) {
 
     setIdleTitle(ctx);
 
-    // Brief completion flash, then hide progress.
     setGhosttyProgress(1, 100);
     completionTimer = setTimeout(() => {
       setGhosttyProgress(0);
@@ -178,13 +138,31 @@ export default function (pi: ExtensionAPI) {
     activeTools.clear();
     activeToolCallId = undefined;
 
-    if (ctx?.hasUI) {
-      setIdleTitle(ctx);
-    }
+    if (ctx?.hasUI) setIdleTitle(ctx);
 
     setGhosttyProgress(0);
-    closeTtyFd();
+    osc.close();
   }
+
+  pi.registerCommand("pi-ghostty-test", {
+    description: "Smoke test Ghostty integration (title + progress)",
+    handler: async (_args, ctx) => {
+      if (!ctx.hasUI) {
+        ctx.ui.notify("pi-ghostty: no UI in current mode", "warning");
+        return;
+      }
+      if (!ghosttyEnabled) {
+        ctx.ui.notify("pi-ghostty: Ghostty not detected", "warning");
+        return;
+      }
+
+      ctx.ui.notify("pi-ghostty: running 2s test", "info");
+      startWorking(ctx);
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+      stopWorking(ctx);
+      ctx.ui.notify("pi-ghostty: test complete", "success");
+    },
+  });
 
   pi.on("session_start", async (_event, ctx) => {
     if (!ctx.hasUI) return;
@@ -195,10 +173,7 @@ export default function (pi: ExtensionAPI) {
   pi.on("model_select", async (event, ctx) => {
     if (!ctx.hasUI) return;
     currentModel = event.model.id;
-
-    if (!isWorking) {
-      setIdleTitle(ctx);
-    }
+    if (!isWorking) setIdleTitle(ctx);
   });
 
   pi.on("agent_start", async (_event, ctx) => {
@@ -218,7 +193,6 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("tool_execution_end", async (event, _ctx) => {
     activeTools.delete(event.toolCallId);
-
     if (activeToolCallId === event.toolCallId) {
       activeToolCallId = getLastMapKey(activeTools);
     }
