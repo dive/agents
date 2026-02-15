@@ -1,33 +1,40 @@
-# pi extensions
+# pi-extensions
 
-This directory is a local pi package containing multiple extensions.
+Local monorepo for independently installable pi extensions.
 
 ## Structure
 
-- `extensions/<extension-name>/index.ts` — one extension per directory
+- `packages/pi-ghostty/` — Ghostty title/spinner/progress integration
+- `packages/pi-notifications/` — Ghostty desktop notifications
 
-## Install
+Each package is a standalone pi package with its own `package.json` and `index.ts`.
+
+## Install per extension
 
 Global:
 
 ```bash
-pi install /Users/dive/Projects/dive/agents/pi-extensions
+pi install /Users/dive/Projects/dive/agents/pi-extensions/packages/pi-ghostty
+pi install /Users/dive/Projects/dive/agents/pi-extensions/packages/pi-notifications
 ```
 
 Project-local:
 
 ```bash
-pi install -l /Users/dive/Projects/dive/agents/pi-extensions
+pi install -l /Users/dive/Projects/dive/agents/pi-extensions/packages/pi-ghostty
+pi install -l /Users/dive/Projects/dive/agents/pi-extensions/packages/pi-notifications
 ```
 
-## Included
+## Migration from old monolithic install
 
-- `pi-ghostty` — Ghostty integration:
-  - dynamic window title
-  - animated braille spinner while the agent works
-  - native Ghostty progress bar (indeterminate + completion flash)
-  - test command: `/pi-ghostty-test`
-- `pi-notifications` — Ghostty desktop notification when the agent finishes
-  - Ghostty-only (no-op on other terminals)
-  - notification rate limiting to avoid spam
-  - test command: `/pi-notifications-test`
+If you previously installed the root `pi-extensions` package and want full per-extension control:
+
+```bash
+pi remove /Users/dive/Projects/dive/agents/pi-extensions
+# then install only what you want from /packages/*
+```
+
+## Test commands
+
+- `/pi-ghostty-test`
+- `/pi-notifications-test`

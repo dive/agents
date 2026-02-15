@@ -1,8 +1,11 @@
 {
-  "name": "pi-extensions",
+  "name": "pi-extensions-monorepo",
   "private": true,
-  "keywords": ["pi-package"],
+  "workspaces": ["packages/*"],
   "pi": {
-    "extensions": ["./extensions"]
+    "extensions": [
+      "./packages/pi-ghostty/index.ts",
+      "./packages/pi-notifications/index.ts"
+    ]
   }
 }

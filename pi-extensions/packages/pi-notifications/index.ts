@@ -1,7 +1,7 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import path from "node:path";
 
-import { createOscWriter, isGhosttyTerminal } from "../_shared/terminal-osc";
+import { createOscWriter, isGhosttyTerminal } from "./shared/terminal-osc";
 
 const MIN_NOTIFICATION_INTERVAL_MS = 1_500;
 
