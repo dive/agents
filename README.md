@@ -15,6 +15,15 @@ python3 setup.py link --replace-symlinks
 python3 setup.py health
 ```
 
+Or via mise tasks:
+
+```bash
+mise run setup-list
+mise run setup-link
+mise run setup-link-replace
+mise run setup-health
+```
+
 ## Notes
 
 - Tools that support `~/.config/AGENTS.md` use the global fallback.
