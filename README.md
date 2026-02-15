@@ -6,6 +6,7 @@ Global instructions and setup for coding agents on this machine.
 
 - `global/AGENTS.md` — canonical global instructions
 - `setup.py` — links and health checks for agent instruction files
+- `pi-extensions/` — local pi package with extensions (including `pi-ghostty`)
 
 ## Usage
 
