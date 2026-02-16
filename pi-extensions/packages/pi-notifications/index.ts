@@ -1,7 +1,7 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import path from "node:path";
 
-import { createOscWriter, isGhosttyTerminal } from "./shared/terminal-osc";
+import { createOscWriter, isGhosttyTerminal } from "pi-terminal-osc";
 
 function sanitize(input: string): string {
   return input.replace(/[\x00-\x1f\x7f]/g, " ").replace(/\s+/g, " ").trim();
