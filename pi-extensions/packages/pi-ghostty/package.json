@@ -3,6 +3,6 @@
   "private": true,
   "keywords": ["pi-package"],
   "pi": {
-    "extensions": ["./index.ts", "./ghostty-theme-sync.ts"]
+    "extensions": ["./ghostty-title-progress.ts", "./ghostty-theme-sync.ts"]
   }
 }
