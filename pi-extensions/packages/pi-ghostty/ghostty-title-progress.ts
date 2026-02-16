@@ -1,5 +1,7 @@
+import { execFile } from "node:child_process";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import path from "node:path";
+import { promisify } from "node:util";
 
 import { createOscWriter, isGhosttyTerminal } from "./shared/terminal-osc";
 
@@ -8,6 +10,9 @@ const SPINNER_INTERVAL_MS = 80;
 const PROGRESS_KEEPALIVE_MS = 1_000;
 const COMPLETION_FLASH_MS = 800;
 const RESULT_FLASH_MS = 900;
+const GIT_REFRESH_INTERVAL_MS = 5_000;
+
+const execFileAsync = promisify(execFile);
 
 type ProgressState = 0 | 1 | 2 | 3 | 4;
 
@@ -31,6 +36,9 @@ export default function (pi: ExtensionAPI) {
   let frameIndex = 0;
   let isWorking = false;
   let lastTurnHadError = false;
+  let gitLabel: string | undefined;
+  let gitRefreshTimer: ReturnType<typeof setInterval> | undefined;
+  let gitRefreshInFlight = false;
 
   const activeTools = new Map<string, string>();
   let activeToolCallId: string | undefined;
@@ -70,11 +78,68 @@ export default function (pi: ExtensionAPI) {
     return activeTools.get(activeToolCallId);
   }
 
+  function clearGitRefreshTimer() {
+    if (!gitRefreshTimer) return;
+    clearInterval(gitRefreshTimer);
+    gitRefreshTimer = undefined;
+  }
+
+  async function refreshGitLabel() {
+    if (gitRefreshInFlight) return;
+    gitRefreshInFlight = true;
+
+    try {
+      const { stdout: branchStdout } = await execFileAsync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
+        cwd: process.cwd(),
+        timeout: 1_500,
+        maxBuffer: 128 * 1024,
+      });
+
+      const branch = branchStdout.trim();
+      if (!branch) {
+        gitLabel = undefined;
+        return;
+      }
+
+      const { stdout: statusStdout } = await execFileAsync("git", ["status", "--porcelain"], {
+        cwd: process.cwd(),
+        timeout: 1_500,
+        maxBuffer: 256 * 1024,
+      });
+
+      const dirty = statusStdout.trim().length > 0;
+      gitLabel = dirty ? `${branch}*` : branch;
+    } catch {
+      gitLabel = undefined;
+    } finally {
+      gitRefreshInFlight = false;
+    }
+  }
+
+  async function refreshGitLabelAndRender(ctx: ExtensionContext) {
+    const previous = gitLabel;
+    await refreshGitLabel();
+    if (!isWorking && previous !== gitLabel) {
+      setIdleTitle(ctx);
+    }
+  }
+
+  function startGitRefreshLoop(ctx: ExtensionContext) {
+    clearGitRefreshTimer();
+    void refreshGitLabelAndRender(ctx);
+
+    gitRefreshTimer = setInterval(() => {
+      void refreshGitLabelAndRender(ctx);
+    }, GIT_REFRESH_INTERVAL_MS);
+    gitRefreshTimer.unref?.();
+  }
+
   function buildBaseTitle(): string {
     const parts: string[] = ["π", path.basename(process.cwd())];
     const sessionName = pi.getSessionName();
     const thinkingLevel = pi.getThinkingLevel();
 
+    if (gitLabel) parts.push(gitLabel);
     if (sessionName) parts.push(sessionName);
     if (currentModel) {
       parts.push(`${currentModel} (${thinkingLevel})`);
@@ -155,11 +220,13 @@ export default function (pi: ExtensionAPI) {
   function resetAll(ctx?: ExtensionContext) {
     isWorking = false;
     lastTurnHadError = false;
+    gitLabel = undefined;
 
     clearSpinnerTimer();
     clearProgressKeepaliveTimer();
     clearCompletionTimer();
     clearResultFlashTimer();
+    clearGitRefreshTimer();
 
     activeTools.clear();
     activeToolCallId = undefined;
@@ -193,12 +260,19 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
     if (!ctx.hasUI) return;
     currentModel = ctx.model?.id;
+    startGitRefreshLoop(ctx);
     setIdleTitle(ctx);
   });
 
   pi.on("model_select", async (event, ctx) => {
     if (!ctx.hasUI) return;
     currentModel = event.model.id;
+    if (!isWorking) setIdleTitle(ctx);
+  });
+
+  pi.on("session_switch", async (_event, ctx) => {
+    if (!ctx.hasUI) return;
+    startGitRefreshLoop(ctx);
     if (!isWorking) setIdleTitle(ctx);
   });
 
@@ -210,6 +284,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("agent_end", async (_event, ctx) => {
     if (!ctx.hasUI) return;
+    await refreshGitLabel();
     stopWorking(ctx);
   });
 
