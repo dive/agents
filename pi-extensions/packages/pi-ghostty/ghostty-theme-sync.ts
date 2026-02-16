@@ -222,6 +222,7 @@ export default function (pi: ExtensionAPI) {
   let pendingReplies = 0;
   let partialOscBuffer = "";
   let inputDebounceTimer: ReturnType<typeof setTimeout> | undefined;
+  let startupQueryTimer: ReturnType<typeof setTimeout> | undefined;
 
   let lastAppliedMode: ThemeMode | undefined;
 
@@ -229,6 +230,12 @@ export default function (pi: ExtensionAPI) {
     if (!inputDebounceTimer) return;
     clearTimeout(inputDebounceTimer);
     inputDebounceTimer = undefined;
+  }
+
+  function clearStartupQueryTimer() {
+    if (!startupQueryTimer) return;
+    clearTimeout(startupQueryTimer);
+    startupQueryTimer = undefined;
   }
 
   function sendOsc11Query() {
@@ -278,6 +285,7 @@ export default function (pi: ExtensionAPI) {
 
   function reset() {
     clearInputDebounce();
+    clearStartupQueryTimer();
     stopTerminalListener?.();
     stopTerminalListener = undefined;
 
@@ -303,11 +311,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_start", async (_event, ctx) => {
     if (!ctx.hasUI) return;
-
-    if (!ghosttyEnabled) {
-      ctx.ui.setStatus("pi-ghostty-theme", "ghostty-theme: inactive (not Ghostty)");
-      return;
-    }
+    if (!ghosttyEnabled) return;
 
     stopTerminalListener?.();
 
@@ -342,16 +346,16 @@ export default function (pi: ExtensionAPI) {
       return { data: extracted.filtered };
     });
 
-    ctx.ui.setStatus("pi-ghostty-theme", "ghostty-theme: OSC 11 sync");
-
-    // Initial sync query.
-    sendOsc11Query();
+    // Defer the initial query until after interactive mode finishes startup.
+    clearStartupQueryTimer();
+    startupQueryTimer = setTimeout(() => {
+      startupQueryTimer = undefined;
+      sendOsc11Query();
+    }, 0);
+    startupQueryTimer.unref?.();
   });
 
-  pi.on("session_shutdown", async (_event, ctx) => {
+  pi.on("session_shutdown", async () => {
     reset();
-    if (ctx.hasUI) {
-      ctx.ui.setStatus("pi-ghostty-theme", undefined);
-    }
   });
 }
