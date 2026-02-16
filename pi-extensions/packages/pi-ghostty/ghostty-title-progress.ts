@@ -27,6 +27,7 @@ export default function (pi: ExtensionAPI) {
   const osc = createOscWriter();
 
   let currentModel: string | undefined;
+  let currentCwd: string = process.cwd();
 
   let spinnerTimer: ReturnType<typeof setInterval> | undefined;
   let progressKeepaliveTimer: ReturnType<typeof setInterval> | undefined;
@@ -90,7 +91,7 @@ export default function (pi: ExtensionAPI) {
 
     try {
       const { stdout: branchStdout } = await execFileAsync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
-        cwd: process.cwd(),
+        cwd: currentCwd,
         timeout: 1_500,
         maxBuffer: 128 * 1024,
       });
@@ -102,7 +103,7 @@ export default function (pi: ExtensionAPI) {
       }
 
       const { stdout: statusStdout } = await execFileAsync("git", ["status", "--porcelain"], {
-        cwd: process.cwd(),
+        cwd: currentCwd,
         timeout: 1_500,
         maxBuffer: 256 * 1024,
       });
@@ -135,7 +136,7 @@ export default function (pi: ExtensionAPI) {
   }
 
   function buildBaseTitle(): string {
-    const parts: string[] = ["π", path.basename(process.cwd())];
+    const parts: string[] = ["π", path.basename(currentCwd)];
     const sessionName = pi.getSessionName();
     const thinkingLevel = pi.getThinkingLevel();
 
@@ -240,6 +241,7 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
     if (!ctx.hasUI) return;
     currentModel = ctx.model?.id;
+    currentCwd = ctx.cwd;
     startGitRefreshLoop(ctx);
     setIdleTitle(ctx);
   });
@@ -252,6 +254,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_switch", async (_event, ctx) => {
     if (!ctx.hasUI) return;
+    currentCwd = ctx.cwd;
     startGitRefreshLoop(ctx);
     if (!isWorking) setIdleTitle(ctx);
   });
