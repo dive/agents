@@ -4,7 +4,8 @@
   "workspaces": ["packages/*"],
   "pi": {
     "extensions": [
-      "./packages/pi-ghostty/index.ts",
+      "./packages/pi-ghostty/ghostty-title-progress.ts",
+      "./packages/pi-ghostty/ghostty-theme-sync.ts",
       "./packages/pi-notifications/index.ts",
       "./packages/pi-session-export-html/index.ts"
     ]
