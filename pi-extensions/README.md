@@ -25,6 +25,14 @@ Extension entrypoints:
   - sends Ghostty desktop notification after each completed agent turn
   - includes status (done/error) + duration in the message
 
+### [`pi-session-export-html`](packages/pi-session-export-html/)
+
+- [`index.ts`](packages/pi-session-export-html/index.ts)
+  - calls built-in `pi --export` for the current session file
+  - writes HTML to `/tmp`
+  - opens the exported file in the default browser
+  - macOS only
+
 ## Install per extension
 
 ```bash
@@ -33,10 +41,12 @@ REPO_DIR=/path/to/agents
 # Global
 pi install "$REPO_DIR/pi-extensions/packages/pi-ghostty"
 pi install "$REPO_DIR/pi-extensions/packages/pi-notifications"
+pi install "$REPO_DIR/pi-extensions/packages/pi-session-export-html"
 
 # Project-local
 pi install -l "$REPO_DIR/pi-extensions/packages/pi-ghostty"
 pi install -l "$REPO_DIR/pi-extensions/packages/pi-notifications"
+pi install -l "$REPO_DIR/pi-extensions/packages/pi-session-export-html"
 ```
 
 ## Theme sync customization (pi-ghostty)
@@ -67,6 +77,7 @@ Fallback environment variables:
 - `/pi-ghostty-test`
 - `/pi-ghostty-theme-sync-now`
 - `/pi-notifications-test`
+- `/pi-session-export-html`
 
 ## Related docs
 
