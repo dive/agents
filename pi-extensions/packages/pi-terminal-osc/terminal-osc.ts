@@ -36,12 +36,13 @@ export function createOscWriter() {
   }
 
   function writeRaw(sequence: string) {
-    try {
-      // Preferred path for terminal control sequences in interactive mode.
-      process.stdout.write(sequence);
-      return;
-    } catch {
-      // Fall through to /dev/tty fallback.
+    if (process.stdout.isTTY) {
+      try {
+        process.stdout.write(sequence);
+        return;
+      } catch {
+        // Fall through to /dev/tty fallback.
+      }
     }
 
     const fd = ensureFd();
