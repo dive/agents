@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Manage global AGENTS.md links for coding tools."""
+"""Manage AGENTS.md links and local pi extension package operations."""
 
 from __future__ import annotations
 

@@ -1,47 +1,47 @@
 # agents
 
-Global instructions and setup for coding agents on this machine.
+Utilities and extension packages for coding agents (with a focus on `pi` + Ghostty).
 
-## Files
+This repository contains:
 
-- `global/AGENTS.md` — canonical global instructions
-- `setup.py` — links and health checks for agent instruction files
-- `pi-extensions/` — local monorepo of separately installable pi extension packages
+- shared `AGENTS.md` guidance used across multiple coding tools
+- a small setup helper (`setup.py`) for link management and `pi` extension install workflows
+- installable `pi` extension packages under `pi-extensions/packages/`
 
-## Usage
+## pi extensions in this repo
 
-### AGENTS.md link management
+| Package | Description | Test commands |
+| --- | --- | --- |
+| `pi-ghostty` | Ghostty-focused UX enhancements for `pi`: dynamic terminal title, spinner, progress integration, plus automatic dark/light theme sync via OSC 11 query. | `/pi-ghostty-test`, `/pi-ghostty-theme-sync-now` |
+| `pi-notifications` | Sends Ghostty desktop notifications when `pi` finishes a response. | `/pi-notifications-test` |
 
-```bash
-python3 setup.py list
-python3 setup.py link --replace-symlinks
-python3 setup.py health
-```
-
-### pi-extensions package management
+## Quick install (from a local clone)
 
 ```bash
-python3 setup.py extensions health --scope both
-python3 setup.py extensions install --scope global
-python3 setup.py extensions install --scope local --package pi-ghostty
-python3 setup.py extensions uninstall --scope global --dry-run
+REPO_DIR=/path/to/agents
+
+# Global install
+pi install "$REPO_DIR/pi-extensions/packages/pi-ghostty"
+pi install "$REPO_DIR/pi-extensions/packages/pi-notifications"
+
+# Project-local install
+pi install -l "$REPO_DIR/pi-extensions/packages/pi-ghostty"
+pi install -l "$REPO_DIR/pi-extensions/packages/pi-notifications"
 ```
 
-Or via mise tasks:
+## Repository layout
 
-```bash
-mise run list
-mise run link
-mise run link-replace
-mise run health
-mise run pi-extensions-health
-mise run pi-extensions-install
-mise run pi-extensions-install-local
-mise run pi-extensions-uninstall
-mise run pi-extensions-uninstall-local
-```
+- `global/AGENTS.md` — canonical shared instructions
+- `setup.py` — setup/ops helper for AGENTS links + `pi` package management
+- `pi-extensions/` — local monorepo of installable `pi` packages
+- `docs/setup-guide.md` — setup command reference (CLI + mise tasks)
 
-## Notes
+## Setup and operations
 
-- Tools that support `~/.config/AGENTS.md` use the global fallback.
-- `setup.py` avoids replacing existing regular files.
+For setup commands and task shortcuts, see:
+
+- [`docs/setup-guide.md`](docs/setup-guide.md)
+
+## License
+
+MIT (see [`LICENSE`](LICENSE)).
