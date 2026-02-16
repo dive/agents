@@ -1,15 +1,35 @@
-[tasks.setup-list]
+[tasks.list]
 description = "Show configured AGENTS.md link targets"
 run = "python3 setup.py list"
 
-[tasks.setup-link]
+[tasks.link]
 description = "Create AGENTS.md links (safe mode)"
 run = "python3 setup.py link"
 
-[tasks.setup-link-replace]
+[tasks.link-replace]
 description = "Create AGENTS.md links and replace stale symlinks"
 run = "python3 setup.py link --replace-symlinks"
 
-[tasks.setup-health]
+[tasks.health]
 description = "Check AGENTS.md link health"
 run = "python3 setup.py health"
+
+[tasks.pi-extensions-health]
+description = "Check pi-extensions install health (global + local)"
+run = "python3 setup.py extensions health --scope both"
+
+[tasks.pi-extensions-install]
+description = "Install all pi-extensions in global pi settings"
+run = "python3 setup.py extensions install --scope global"
+
+[tasks.pi-extensions-install-local]
+description = "Install all pi-extensions in project .pi/settings.json"
+run = "python3 setup.py extensions install --scope local"
+
+[tasks.pi-extensions-uninstall]
+description = "Uninstall all pi-extensions from global pi settings"
+run = "python3 setup.py extensions uninstall --scope global"
+
+[tasks.pi-extensions-uninstall-local]
+description = "Uninstall all pi-extensions from project .pi/settings.json"
+run = "python3 setup.py extensions uninstall --scope local"
