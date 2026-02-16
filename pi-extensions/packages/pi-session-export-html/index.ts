@@ -77,7 +77,7 @@ async function runCommand(command: string, args: string[], cwd: string, timeoutM
 
 export default function (pi: ExtensionAPI) {
   pi.registerCommand("open-export", {
-    description: "Export current session to /tmp HTML via pi --export and open it",
+    description: "Export current session to /tmp HTML via pi --export and open it (macOS only)",
     handler: async (_args, ctx) => {
       await ctx.waitForIdle();
 
