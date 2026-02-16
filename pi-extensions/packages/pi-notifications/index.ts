@@ -3,9 +3,6 @@ import path from "node:path";
 
 import { createOscWriter, isGhosttyTerminal } from "./shared/terminal-osc";
 
-const MIN_NOTIFICATION_INTERVAL_MS = 1_500;
-const MIN_SUCCESS_NOTIFICATION_DURATION_MS = 10_000;
-
 function sanitize(input: string): string {
   return input.replace(/[\x00-\x1f\x7f]/g, " ").replace(/\s+/g, " ").trim();
 }
@@ -24,21 +21,9 @@ export default function (pi: ExtensionAPI) {
   const ghosttyEnabled = isGhosttyTerminal();
   const osc = createOscWriter();
 
-  let lastNotificationAt = 0;
   let wasWorking = false;
   let turnStartedAt = 0;
   let turnHadError = false;
-
-  function shouldNotifyNow(): boolean {
-    const now = Date.now();
-    if (now - lastNotificationAt < MIN_NOTIFICATION_INTERVAL_MS) return false;
-    lastNotificationAt = now;
-    return true;
-  }
-
-  function markNotifiedNow() {
-    lastNotificationAt = Date.now();
-  }
 
   function buildNotificationMessage(status: "done" | "error", durationMs: number): string {
     const cwd = path.basename(process.cwd());
@@ -93,10 +78,6 @@ export default function (pi: ExtensionAPI) {
 
     turnStartedAt = 0;
     turnHadError = false;
-
-    if (!hadError && durationMs < MIN_SUCCESS_NOTIFICATION_DURATION_MS) return;
-    if (!hadError && !shouldNotifyNow()) return;
-    if (hadError) markNotifiedNow();
 
     notifyGhostty(buildNotificationMessage(hadError ? "error" : "done", durationMs));
   });
