@@ -53,6 +53,7 @@ const DEFAULT_LIGHT_THEME_NAME = ENV_LIGHT_THEME_NAME ?? "light";
 
 const LUMINANCE_THRESHOLD = toSafeFloat(process.env.PI_GHOSTTY_THEME_LUMINANCE_THRESHOLD, 0.42);
 const INPUT_DEBOUNCE_MS = toSafeInt(process.env.PI_GHOSTTY_THEME_INPUT_DEBOUNCE_MS, 350);
+const REPLY_TIMEOUT_MS = 2_000;
 
 function toSafeInt(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
@@ -304,6 +305,7 @@ export default function (pi: ExtensionAPI) {
   let partialOscBuffer = "";
   let inputDebounceTimer: ReturnType<typeof setTimeout> | undefined;
   let startupQueryTimer: ReturnType<typeof setTimeout> | undefined;
+  let replyTimeoutTimer: ReturnType<typeof setTimeout> | undefined;
 
   let themeNames: ThemeNames = {
     darkThemeName: DEFAULT_DARK_THEME_NAME,
@@ -324,6 +326,22 @@ export default function (pi: ExtensionAPI) {
     startupQueryTimer = undefined;
   }
 
+  function clearReplyTimeout() {
+    if (!replyTimeoutTimer) return;
+    clearTimeout(replyTimeoutTimer);
+    replyTimeoutTimer = undefined;
+  }
+
+  function startReplyTimeout() {
+    clearReplyTimeout();
+    replyTimeoutTimer = setTimeout(() => {
+      replyTimeoutTimer = undefined;
+      pendingReplies = 0;
+      partialOscBuffer = "";
+    }, REPLY_TIMEOUT_MS);
+    replyTimeoutTimer.unref?.();
+  }
+
   function scheduleStartupQuery() {
     clearStartupQueryTimer();
     startupQueryTimer = setTimeout(() => {
@@ -337,6 +355,7 @@ export default function (pi: ExtensionAPI) {
   function sendOsc11Query() {
     pendingReplies += 1;
     osc.writeOsc(OSC11_QUERY, "st");
+    startReplyTimeout();
   }
 
   function queueSyncFromInput() {
@@ -382,6 +401,7 @@ export default function (pi: ExtensionAPI) {
   function reset() {
     clearInputDebounce();
     clearStartupQueryTimer();
+    clearReplyTimeout();
     stopTerminalListener?.();
     stopTerminalListener = undefined;
 
@@ -427,6 +447,7 @@ export default function (pi: ExtensionAPI) {
 
       if (extracted.payloads.length > 0) {
         pendingReplies = Math.max(0, pendingReplies - extracted.payloads.length);
+        if (pendingReplies === 0) clearReplyTimeout();
         for (const payload of extracted.payloads) {
           processOscReplyPayload(ctx, payload, "auto");
         }
