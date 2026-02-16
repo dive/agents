@@ -7,6 +7,7 @@ const BRAILLE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", 
 const SPINNER_INTERVAL_MS = 80;
 const PROGRESS_KEEPALIVE_MS = 1_000;
 const COMPLETION_FLASH_MS = 800;
+const RESULT_FLASH_MS = 900;
 
 type ProgressState = 0 | 1 | 2 | 3 | 4;
 
@@ -25,9 +26,11 @@ export default function (pi: ExtensionAPI) {
   let spinnerTimer: ReturnType<typeof setInterval> | undefined;
   let progressKeepaliveTimer: ReturnType<typeof setInterval> | undefined;
   let completionTimer: ReturnType<typeof setTimeout> | undefined;
+  let resultFlashTimer: ReturnType<typeof setTimeout> | undefined;
 
   let frameIndex = 0;
   let isWorking = false;
+  let lastTurnHadError = false;
 
   const activeTools = new Map<string, string>();
   let activeToolCallId: string | undefined;
@@ -54,6 +57,12 @@ export default function (pi: ExtensionAPI) {
     if (!completionTimer) return;
     clearTimeout(completionTimer);
     completionTimer = undefined;
+  }
+
+  function clearResultFlashTimer() {
+    if (!resultFlashTimer) return;
+    clearTimeout(resultFlashTimer);
+    resultFlashTimer = undefined;
   }
 
   function getActiveToolName(): string | undefined {
@@ -94,6 +103,7 @@ export default function (pi: ExtensionAPI) {
     clearCompletionTimer();
     clearSpinnerTimer();
     clearProgressKeepaliveTimer();
+    clearResultFlashTimer();
 
     isWorking = true;
     frameIndex = 0;
@@ -119,11 +129,20 @@ export default function (pi: ExtensionAPI) {
     clearSpinnerTimer();
     clearProgressKeepaliveTimer();
     clearCompletionTimer();
+    clearResultFlashTimer();
 
     activeTools.clear();
     activeToolCallId = undefined;
 
-    setIdleTitle(ctx);
+    const base = buildBaseTitle();
+    const resultSymbol = lastTurnHadError ? "✗" : "✓";
+    ctx.ui.setTitle(`${resultSymbol} ${base}`);
+
+    resultFlashTimer = setTimeout(() => {
+      setIdleTitle(ctx);
+      resultFlashTimer = undefined;
+    }, RESULT_FLASH_MS);
+    resultFlashTimer.unref?.();
 
     setGhosttyProgress(1, 100);
     completionTimer = setTimeout(() => {
@@ -135,10 +154,12 @@ export default function (pi: ExtensionAPI) {
 
   function resetAll(ctx?: ExtensionContext) {
     isWorking = false;
+    lastTurnHadError = false;
 
     clearSpinnerTimer();
     clearProgressKeepaliveTimer();
     clearCompletionTimer();
+    clearResultFlashTimer();
 
     activeTools.clear();
     activeToolCallId = undefined;
@@ -183,6 +204,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("agent_start", async (_event, ctx) => {
     if (!ctx.hasUI) return;
+    lastTurnHadError = false;
     startWorking(ctx);
   });
 
@@ -198,6 +220,9 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("tool_execution_end", async (event, _ctx) => {
     activeTools.delete(event.toolCallId);
+    if (event.isError) {
+      lastTurnHadError = true;
+    }
     if (activeToolCallId === event.toolCallId) {
       activeToolCallId = getLastMapKey(activeTools);
     }
