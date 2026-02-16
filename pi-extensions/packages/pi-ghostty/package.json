@@ -2,9 +2,6 @@
   "name": "pi-ghostty",
   "private": true,
   "keywords": ["pi-package"],
-  "dependencies": {
-    "pi-terminal-osc": "workspace:*"
-  },
   "pi": {
     "extensions": ["./ghostty-title-progress.ts", "./ghostty-theme-sync.ts"]
   }

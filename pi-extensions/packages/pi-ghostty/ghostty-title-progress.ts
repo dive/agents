@@ -3,7 +3,7 @@ import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-age
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { createOscWriter, isGhosttyTerminal } from "pi-terminal-osc";
+import { createOscWriter, isGhosttyTerminal } from "../pi-terminal-osc/terminal-osc";
 
 const BRAILLE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const SPINNER_INTERVAL_MS = 80;

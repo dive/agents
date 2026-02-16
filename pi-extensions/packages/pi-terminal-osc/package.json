@@ -1,5 +1,0 @@
-{
-  "name": "pi-terminal-osc",
-  "private": true,
-  "exports": "./terminal-osc.ts"
-}
