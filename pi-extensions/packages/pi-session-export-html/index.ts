@@ -35,7 +35,7 @@ async function runCommand(command: string, args: string[], cwd: string, timeoutM
   await new Promise<void>((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ["ignore", "ignore", "pipe"],
     });
 
     let stderr = "";
