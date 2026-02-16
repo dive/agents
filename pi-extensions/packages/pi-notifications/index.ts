@@ -42,19 +42,6 @@ export default function (pi: ExtensionAPI) {
     osc.writeOsc(`9;${message}`, "bel");
   }
 
-  pi.registerCommand("pi-notifications-test", {
-    description: "Send a test Ghostty notification",
-    handler: async (_args, ctx) => {
-      if (!ghosttyEnabled) {
-        ctx.ui.notify("pi-notifications: Ghostty not detected", "warning");
-        return;
-      }
-
-      notifyGhostty(buildNotificationMessage("done", 0));
-      ctx.ui.notify("pi-notifications: test sent", "success");
-    },
-  });
-
   pi.on("agent_start", async () => {
     wasWorking = true;
     turnStartedAt = Date.now();

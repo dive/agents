@@ -288,7 +288,7 @@ function applyTheme(
   }
 
   ctx.ui.notify(
-    `pi-ghostty-theme: failed to set \"${themeName}\" (${result.error ?? "unknown"})`,
+    `ghostty-sync: failed to set \"${themeName}\" (${result.error ?? "unknown"})`,
     "warning",
   );
   return undefined;
@@ -353,7 +353,7 @@ export default function (pi: ExtensionAPI) {
     const rgb = parseColorSpec(payload);
     if (!rgb) {
       if (reason === "manual") {
-        ctx.ui.notify(`pi-ghostty-theme: unsupported OSC 11 payload: ${payload}`, "warning");
+        ctx.ui.notify(`ghostty-sync: unsupported OSC 11 payload: ${payload}`, "warning");
       }
       return;
     }
@@ -361,7 +361,7 @@ export default function (pi: ExtensionAPI) {
     const nextMode = inferTheme(rgb);
     if (nextMode === lastAppliedMode) {
       if (reason === "manual") {
-        ctx.ui.notify(`pi-ghostty-theme: already ${nextMode} (rgb ${rgb.r},${rgb.g},${rgb.b})`, "info");
+        ctx.ui.notify(`ghostty-sync: already ${nextMode} (rgb ${rgb.r},${rgb.g},${rgb.b})`, "info");
       }
       return;
     }
@@ -373,7 +373,7 @@ export default function (pi: ExtensionAPI) {
 
     if (reason === "manual") {
       ctx.ui.notify(
-        `pi-ghostty-theme: switched to ${applied.mode} via OSC 11 (${rgb.r},${rgb.g},${rgb.b})`,
+        `ghostty-sync: switched to ${applied.mode} via OSC 11 (${rgb.r},${rgb.g},${rgb.b})`,
         "info",
       );
     }
@@ -391,17 +391,17 @@ export default function (pi: ExtensionAPI) {
     osc.close();
   }
 
-  pi.registerCommand("pi-ghostty-theme-sync-now", {
-    description: "Query Ghostty (OSC 11) and sync pi theme immediately",
+  pi.registerCommand("ghostty-sync", {
+    description: "Sync pi theme from current Ghostty background (OSC 11)",
     handler: async (_args, ctx) => {
       if (!ctx.hasUI) return;
       if (!ghosttyEnabled) {
-        ctx.ui.notify("pi-ghostty-theme: Ghostty not detected", "warning");
+        ctx.ui.notify("ghostty-sync: Ghostty not detected", "warning");
         return;
       }
 
       sendOsc11Query();
-      ctx.ui.notify("pi-ghostty-theme: sent OSC 11 query", "info");
+      ctx.ui.notify("ghostty-sync: sent OSC 11 query", "info");
     },
   });
 

@@ -12,9 +12,9 @@ Utilities and extension packages for coding agents (focused on [`pi`](https://gi
 
 | Package | What it adds | Commands |
 | --- | --- | --- |
-| [`pi-ghostty`](pi-extensions/packages/pi-ghostty/) | Terminal title/status UX for Ghostty (spinner, tool name, result flash, git branch marker, model + thinking level) and OSC 11 light/dark theme sync. | `/pi-ghostty-test`, `/pi-ghostty-theme-sync-now` |
-| [`pi-notifications`](pi-extensions/packages/pi-notifications/) | Ghostty desktop notifications on each completed agent turn, including duration and error/success status. | `/pi-notifications-test` |
-| [`pi-session-export-html`](pi-extensions/packages/pi-session-export-html/) | Uses built-in `pi --export` to export the current session to `/tmp/*.html` and opens it in the default browser (macOS only). | `/pi-session-export-html` |
+| [`pi-ghostty`](pi-extensions/packages/pi-ghostty/) | Terminal title/status UX for Ghostty (spinner, tool name, result flash, git branch marker, model + thinking level) and OSC 11 light/dark theme sync. | `/ghostty-sync` |
+| [`pi-notifications`](pi-extensions/packages/pi-notifications/) | Ghostty desktop notifications on each completed agent turn, including duration and error/success status. | *(no commands)* |
+| [`pi-session-export-html`](pi-extensions/packages/pi-session-export-html/) | Uses built-in `pi --export` to export the current session to `/tmp/*.html` and opens it in the default browser (macOS only). | `/export-open` |
 
 More details: [`pi-extensions/README.md`](pi-extensions/README.md)
 

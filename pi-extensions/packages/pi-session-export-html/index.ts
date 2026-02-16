@@ -79,11 +79,11 @@ async function runExportCommand(command: string, args: string[], cwd: string, ti
 }
 
 export default function (pi: ExtensionAPI) {
-  pi.registerCommand("pi-session-export-html", {
-    description: "Export current session to /tmp HTML (via pi --export) and open it (macOS)",
+  pi.registerCommand("export-open", {
+    description: "Export current session to /tmp HTML via pi --export and open it (macOS)",
     handler: async (_args, ctx) => {
       if (process.platform !== "darwin") {
-        if (ctx.hasUI) ctx.ui.notify("pi-session-export-html: macOS only", "warning");
+        if (ctx.hasUI) ctx.ui.notify("export-open: macOS only", "warning");
         return;
       }
 
@@ -92,7 +92,7 @@ export default function (pi: ExtensionAPI) {
       const sessionFile = ctx.sessionManager.getSessionFile();
       if (!sessionFile) {
         if (ctx.hasUI) {
-          ctx.ui.notify("pi-session-export-html: no session file (ephemeral mode?)", "warning");
+          ctx.ui.notify("export-open: no session file (ephemeral mode?)", "warning");
         }
         return;
       }
@@ -130,7 +130,7 @@ export default function (pi: ExtensionAPI) {
 
       if (!exportSucceeded) {
         const reason = failures[failures.length - 1] ?? "unknown export error";
-        if (ctx.hasUI) ctx.ui.notify(`pi-session-export-html: export failed (${reason})`, "error");
+        if (ctx.hasUI) ctx.ui.notify(`export-open: export failed (${reason})`, "error");
         return;
       }
 
@@ -138,12 +138,12 @@ export default function (pi: ExtensionAPI) {
         await execFileAsync("open", [outputPath], { timeout: 3_000 });
       } catch (error) {
         const message = error instanceof Error ? error.message : "unknown open error";
-        if (ctx.hasUI) ctx.ui.notify(`pi-session-export-html: exported but failed to open (${message})`, "warning");
+        if (ctx.hasUI) ctx.ui.notify(`export-open: exported but failed to open (${message})`, "warning");
         return;
       }
 
       if (ctx.hasUI) {
-        ctx.ui.notify(`pi-session-export-html: opened ${outputPath}`, "info");
+        ctx.ui.notify(`export-open: opened ${outputPath}`, "info");
       }
     },
   });

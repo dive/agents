@@ -18,6 +18,7 @@ Extension entrypoints:
 - [`ghostty-theme-sync.ts`](packages/pi-ghostty/ghostty-theme-sync.ts)
   - OSC 11 background query parsing
   - auto switch between light/dark pi themes in Ghostty
+  - slash command: `/ghostty-sync`
 
 ### [`pi-notifications`](packages/pi-notifications/)
 
@@ -31,6 +32,7 @@ Extension entrypoints:
   - calls built-in `pi --export` for the current session file
   - writes HTML to `/tmp`
   - opens the exported file in the default browser
+  - slash command: `/export-open`
   - macOS only
 
 ## Install per extension
@@ -72,12 +74,12 @@ Fallback environment variables:
 - `PI_GHOSTTY_THEME_DARK`
 - `PI_GHOSTTY_THEME_LIGHT`
 
-## Test commands
+## Commands
 
-- `/pi-ghostty-test`
-- `/pi-ghostty-theme-sync-now`
-- `/pi-notifications-test`
-- `/pi-session-export-html`
+- `/ghostty-sync` — force a manual Ghostty OSC 11 theme sync
+- `/export-open` — export current session to `/tmp/*.html` and open it (macOS)
+
+`pi-notifications` has no slash commands.
 
 ## Related docs
 

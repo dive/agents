@@ -237,26 +237,6 @@ export default function (pi: ExtensionAPI) {
     osc.close();
   }
 
-  pi.registerCommand("pi-ghostty-test", {
-    description: "Smoke test Ghostty integration (title + progress)",
-    handler: async (_args, ctx) => {
-      if (!ctx.hasUI) {
-        ctx.ui.notify("pi-ghostty: no UI in current mode", "warning");
-        return;
-      }
-      if (!ghosttyEnabled) {
-        ctx.ui.notify("pi-ghostty: Ghostty not detected", "warning");
-        return;
-      }
-
-      ctx.ui.notify("pi-ghostty: running 2s test", "info");
-      startWorking(ctx);
-      await new Promise((resolve) => setTimeout(resolve, 2_000));
-      stopWorking(ctx);
-      ctx.ui.notify("pi-ghostty: test complete", "success");
-    },
-  });
-
   pi.on("session_start", async (_event, ctx) => {
     if (!ctx.hasUI) return;
     currentModel = ctx.model?.id;
