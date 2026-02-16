@@ -1,13 +1,29 @@
 # pi-extensions
 
-Local monorepo for independently installable `pi` extensions.
+Local monorepo for independently installable [`pi`](https://github.com/badlogic/pi-mono) extensions.
 
 ## Packages
 
-- `packages/pi-ghostty/` — Ghostty title/spinner/progress integration + dark/light theme sync
-- `packages/pi-notifications/` — Ghostty desktop notifications when the agent finishes
+### [`pi-ghostty`](packages/pi-ghostty/)
 
-Each package is standalone and can be installed independently.
+Extension entrypoints:
+
+- [`ghostty-title-progress.ts`](packages/pi-ghostty/ghostty-title-progress.ts)
+  - animated working spinner in terminal title
+  - active tool name while running
+  - model + thinking level in title (`model (low|medium|high|...)`)
+  - git branch marker with dirty state (`branch*`)
+  - short result flash in title (`✓` / `✗`)
+  - Ghostty progress integration
+- [`ghostty-theme-sync.ts`](packages/pi-ghostty/ghostty-theme-sync.ts)
+  - OSC 11 background query parsing
+  - auto switch between light/dark pi themes in Ghostty
+
+### [`pi-notifications`](packages/pi-notifications/)
+
+- [`index.ts`](packages/pi-notifications/index.ts)
+  - sends Ghostty desktop notification after each completed agent turn
+  - includes status (done/error) + duration in the message
 
 ## Install per extension
 
@@ -25,9 +41,7 @@ pi install -l "$REPO_DIR/pi-extensions/packages/pi-notifications"
 
 ## Theme sync customization (pi-ghostty)
 
-You can override which pi theme is used for Ghostty dark/light detection.
-
-`pi-ghostty` reads these keys (project overrides global):
+`ghostty-theme-sync.ts` reads theme names from settings (project overrides global):
 
 - `.pi/settings.json`
 - `~/.pi/agent/settings.json`
@@ -43,7 +57,7 @@ You can override which pi theme is used for Ghostty dark/light detection.
 }
 ```
 
-Environment variables still work as fallback:
+Fallback environment variables:
 
 - `PI_GHOSTTY_THEME_DARK`
 - `PI_GHOSTTY_THEME_LIGHT`
@@ -53,3 +67,8 @@ Environment variables still work as fallback:
 - `/pi-ghostty-test`
 - `/pi-ghostty-theme-sync-now`
 - `/pi-notifications-test`
+
+## Related docs
+
+- Root overview: [`../README.md`](../README.md)
+- Setup commands/tasks: [`../docs/setup-guide.md`](../docs/setup-guide.md)

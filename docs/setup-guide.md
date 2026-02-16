@@ -2,6 +2,10 @@
 
 This guide covers operational commands for this repository.
 
+For package feature details, see:
+
+- [`../pi-extensions/README.md`](../pi-extensions/README.md)
+
 ## Prerequisites
 
 - Python 3 (`python3`)

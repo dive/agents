@@ -1,21 +1,23 @@
 # agents
 
-Utilities and extension packages for coding agents (with a focus on `pi` + Ghostty).
+Utilities and extension packages for coding agents (focused on [`pi`](https://github.com/badlogic/pi-mono) + Ghostty).
 
-This repository contains:
+## What is in this repo
 
-- shared `AGENTS.md` guidance used across multiple coding tools
-- a small setup helper (`setup.py`) for link management and `pi` extension install workflows
-- installable `pi` extension packages under `pi-extensions/packages/`
+- [`global/AGENTS.md`](global/AGENTS.md) — shared instructions used across coding tools
+- [`setup.py`](setup.py) — helper for AGENTS link management + `pi` package operations
+- [`pi-extensions/`](pi-extensions/) — installable `pi` extension packages
 
-## pi extensions in this repo
+## pi extension packages
 
-| Package | Description | Test commands |
+| Package | What it adds | Commands |
 | --- | --- | --- |
-| `pi-ghostty` | Ghostty-focused UX enhancements for `pi`: dynamic terminal title, spinner, progress integration, plus automatic dark/light theme sync via OSC 11 query. | `/pi-ghostty-test`, `/pi-ghostty-theme-sync-now` |
-| `pi-notifications` | Sends Ghostty desktop notifications when `pi` finishes a response. | `/pi-notifications-test` |
+| [`pi-ghostty`](pi-extensions/packages/pi-ghostty/) | Terminal title/status UX for Ghostty (spinner, tool name, result flash, git branch marker, model + thinking level) and OSC 11 light/dark theme sync. | `/pi-ghostty-test`, `/pi-ghostty-theme-sync-now` |
+| [`pi-notifications`](pi-extensions/packages/pi-notifications/) | Ghostty desktop notifications on each completed agent turn, including duration and error/success status. | `/pi-notifications-test` |
 
-## Quick install (from a local clone)
+More details: [`pi-extensions/README.md`](pi-extensions/README.md)
+
+## Install from a local clone
 
 ```bash
 REPO_DIR=/path/to/agents
@@ -29,19 +31,11 @@ pi install -l "$REPO_DIR/pi-extensions/packages/pi-ghostty"
 pi install -l "$REPO_DIR/pi-extensions/packages/pi-notifications"
 ```
 
-## Repository layout
-
-- `global/AGENTS.md` — canonical shared instructions
-- `setup.py` — setup/ops helper for AGENTS links + `pi` package management
-- `pi-extensions/` — local monorepo of installable `pi` packages
-- `docs/setup-guide.md` — setup command reference (CLI + mise tasks)
-
 ## Setup and operations
 
-For setup commands and task shortcuts, see:
-
-- [`docs/setup-guide.md`](docs/setup-guide.md)
+- Setup guide: [`docs/setup-guide.md`](docs/setup-guide.md)
+- Includes both CLI commands and `mise` task shortcuts
 
 ## License
 
-MIT (see [`LICENSE`](LICENSE)).
+MIT — see [`LICENSE`](LICENSE).
