@@ -24,9 +24,10 @@ export default function (pi: ExtensionAPI) {
   let wasWorking = false;
   let turnStartedAt = 0;
   let turnHadError = false;
+  let currentCwd: string = process.cwd();
 
   function buildNotificationMessage(status: "done" | "error", durationMs: number): string {
-    const cwd = path.basename(process.cwd());
+    const cwd = path.basename(currentCwd);
     const session = pi.getSessionName();
     const duration = formatDuration(durationMs);
     const headline = status === "error" ? `pi error in ${duration}` : `pi done in ${duration}`;
@@ -41,6 +42,14 @@ export default function (pi: ExtensionAPI) {
     // Use BEL terminator for wide compatibility with notification protocols.
     osc.writeOsc(`9;${message}`, "bel");
   }
+
+  pi.on("session_start", async (_event, ctx) => {
+    currentCwd = ctx.cwd;
+  });
+
+  pi.on("session_switch", async (_event, ctx) => {
+    currentCwd = ctx.cwd;
+  });
 
   pi.on("agent_start", async () => {
     wasWorking = true;
