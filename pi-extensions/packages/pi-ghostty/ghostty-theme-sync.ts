@@ -214,8 +214,8 @@ type ExtractResult = {
  *
  * We intentionally only look for OSC 11 and leave all other input untouched.
  */
-function extractOsc11Replies(input: string, maxMatches: number): ExtractResult {
-  if (maxMatches <= 0 || input.length === 0) {
+function extractOsc11Replies(input: string, maxCollect: number): ExtractResult {
+  if (input.length === 0) {
     return { filtered: input, payloads: [], partial: "" };
   }
 
@@ -224,7 +224,7 @@ function extractOsc11Replies(input: string, maxMatches: number): ExtractResult {
 
   let cursor = 0;
 
-  while (cursor < input.length && payloads.length < maxMatches) {
+  while (cursor < input.length) {
     const start = input.indexOf(OSC11_PREFIX, cursor);
     if (start === -1) {
       filtered += input.slice(cursor);
@@ -261,7 +261,9 @@ function extractOsc11Replies(input: string, maxMatches: number): ExtractResult {
       return { filtered, payloads, partial: input.slice(start) };
     }
 
-    payloads.push(input.slice(payloadStart, end));
+    if (payloads.length < maxCollect) {
+      payloads.push(input.slice(payloadStart, end));
+    }
     cursor = end + terminatorLength;
   }
 
