@@ -272,11 +272,13 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.on("tool_execution_start", async (event, _ctx) => {
+    if (!isWorking) return;
     activeTools.set(event.toolCallId, event.toolName);
     activeToolCallId = event.toolCallId;
   });
 
   pi.on("tool_execution_end", async (event, _ctx) => {
+    if (!isWorking) return;
     activeTools.delete(event.toolCallId);
     if (event.isError) {
       lastTurnHadError = true;
