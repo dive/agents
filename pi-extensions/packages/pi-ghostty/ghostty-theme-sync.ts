@@ -4,11 +4,26 @@
  * Requirements covered:
  * - Ghostty-only (uses pi-ghostty terminal helpers)
  * - No tmux/multiplexer handling
- * - No timeout/retry flow
  * - Careful input filtering: only strips OSC 11 replies, never normal keys
  *
  * Usage:
- *   pi -e /Users/dive/Projects/dive/agents/pi-extensions/packages/pi-ghostty/ghostty-theme-sync.ts
+ *   pi -e /path/to/agents/pi-extensions/packages/pi-ghostty/ghostty-theme-sync.ts
+ *
+ * Theme override sources (highest priority first):
+ * 1) project settings: .pi/settings.json
+ * 2) global settings:  ~/.pi/agent/settings.json
+ * 3) env vars:         PI_GHOSTTY_THEME_DARK / PI_GHOSTTY_THEME_LIGHT
+ * 4) built-in defaults: dark / light
+ *
+ * Settings shape:
+ * {
+ *   "pi-ghostty-extension": {
+ *     "themes": {
+ *       "dark": "my-dark-theme",
+ *       "light": "my-light-theme"
+ *     }
+ *   }
+ * }
  *
  * Optional env vars:
  *   PI_GHOSTTY_THEME_DARK=dark
@@ -16,6 +31,10 @@
  *   PI_GHOSTTY_THEME_LUMINANCE_THRESHOLD=0.42
  *   PI_GHOSTTY_THEME_INPUT_DEBOUNCE_MS=350
  */
+
+import { existsSync, readFileSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 
@@ -26,8 +45,12 @@ const OSC11_PREFIX = "\x1b]11;";
 const BEL = "\x07";
 const ST = "\x1b\\";
 
-const DARK_THEME_NAME = process.env.PI_GHOSTTY_THEME_DARK ?? "dark";
-const LIGHT_THEME_NAME = process.env.PI_GHOSTTY_THEME_LIGHT ?? "light";
+const ENV_DARK_THEME_NAME = process.env.PI_GHOSTTY_THEME_DARK;
+const ENV_LIGHT_THEME_NAME = process.env.PI_GHOSTTY_THEME_LIGHT;
+
+const DEFAULT_DARK_THEME_NAME = ENV_DARK_THEME_NAME ?? "dark";
+const DEFAULT_LIGHT_THEME_NAME = ENV_LIGHT_THEME_NAME ?? "light";
+
 const LUMINANCE_THRESHOLD = toSafeFloat(process.env.PI_GHOSTTY_THEME_LUMINANCE_THRESHOLD, 0.42);
 const INPUT_DEBOUNCE_MS = toSafeInt(process.env.PI_GHOSTTY_THEME_INPUT_DEBOUNCE_MS, 350);
 
@@ -43,6 +66,60 @@ function toSafeFloat(value: string | undefined, fallback: number): number {
 
 type ThemeMode = "dark" | "light";
 type Rgb = { r: number; g: number; b: number };
+
+type ThemeNames = {
+  darkThemeName: string;
+  lightThemeName: string;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function readJsonFile(filePath: string): unknown {
+  if (!existsSync(filePath)) return undefined;
+
+  try {
+    const content = readFileSync(filePath, "utf-8");
+    return JSON.parse(content);
+  } catch {
+    return undefined;
+  }
+}
+
+function sanitizeThemeName(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function readThemeNamesFromSettings(settings: unknown): Partial<ThemeNames> {
+  if (!isRecord(settings)) return {};
+
+  const extensionConfig = settings["pi-ghostty-extension"];
+  if (!isRecord(extensionConfig)) return {};
+
+  const themesConfig = extensionConfig["themes"];
+  if (!isRecord(themesConfig)) return {};
+
+  return {
+    darkThemeName: sanitizeThemeName(themesConfig["dark"]),
+    lightThemeName: sanitizeThemeName(themesConfig["light"]),
+  };
+}
+
+function resolveThemeNames(cwd: string): ThemeNames {
+  const globalSettingsPath = path.join(os.homedir(), ".pi", "agent", "settings.json");
+  const projectSettingsPath = path.join(cwd, ".pi", "settings.json");
+
+  const globalNames = readThemeNamesFromSettings(readJsonFile(globalSettingsPath));
+  const projectNames = readThemeNamesFromSettings(readJsonFile(projectSettingsPath));
+
+  return {
+    darkThemeName: projectNames.darkThemeName ?? globalNames.darkThemeName ?? DEFAULT_DARK_THEME_NAME,
+    lightThemeName: projectNames.lightThemeName ?? globalNames.lightThemeName ?? DEFAULT_LIGHT_THEME_NAME,
+  };
+}
 
 function clamp8(value: number): number {
   if (value < 0) return 0;
@@ -191,8 +268,12 @@ function extractOsc11Replies(input: string, maxMatches: number): ExtractResult {
   return { filtered, payloads, partial: "" };
 }
 
-function applyTheme(ctx: ExtensionContext, mode: ThemeMode): { mode: ThemeMode; appliedThemeName: string } | undefined {
-  const themeName = mode === "dark" ? DARK_THEME_NAME : LIGHT_THEME_NAME;
+function applyTheme(
+  ctx: ExtensionContext,
+  mode: ThemeMode,
+  themeNames: ThemeNames,
+): { mode: ThemeMode; appliedThemeName: string } | undefined {
+  const themeName = mode === "dark" ? themeNames.darkThemeName : themeNames.lightThemeName;
   const result = ctx.ui.setTheme(themeName);
 
   if (result.success) {
@@ -224,6 +305,11 @@ export default function (pi: ExtensionAPI) {
   let inputDebounceTimer: ReturnType<typeof setTimeout> | undefined;
   let startupQueryTimer: ReturnType<typeof setTimeout> | undefined;
 
+  let themeNames: ThemeNames = {
+    darkThemeName: DEFAULT_DARK_THEME_NAME,
+    lightThemeName: DEFAULT_LIGHT_THEME_NAME,
+  };
+
   let lastAppliedMode: ThemeMode | undefined;
 
   function clearInputDebounce() {
@@ -236,6 +322,16 @@ export default function (pi: ExtensionAPI) {
     if (!startupQueryTimer) return;
     clearTimeout(startupQueryTimer);
     startupQueryTimer = undefined;
+  }
+
+  function scheduleStartupQuery() {
+    clearStartupQueryTimer();
+    startupQueryTimer = setTimeout(() => {
+      startupQueryTimer = undefined;
+      if (pendingReplies > 0) return;
+      sendOsc11Query();
+    }, 0);
+    startupQueryTimer.unref?.();
   }
 
   function sendOsc11Query() {
@@ -270,7 +366,7 @@ export default function (pi: ExtensionAPI) {
       return;
     }
 
-    const applied = applyTheme(ctx, nextMode);
+    const applied = applyTheme(ctx, nextMode, themeNames);
     if (!applied) return;
 
     lastAppliedMode = nextMode;
@@ -313,6 +409,8 @@ export default function (pi: ExtensionAPI) {
     if (!ctx.hasUI) return;
     if (!ghosttyEnabled) return;
 
+    themeNames = resolveThemeNames(ctx.cwd);
+
     stopTerminalListener?.();
 
     stopTerminalListener = ctx.ui.onTerminalInput((data) => {
@@ -335,7 +433,7 @@ export default function (pi: ExtensionAPI) {
       }
 
       // Query again after real user input (but not after pure OSC replies).
-      if (extracted.filtered.length > 0 && pendingReplies <= 0) {
+      if (extracted.filtered.length > 0) {
         queueSyncFromInput();
       }
 
@@ -346,13 +444,16 @@ export default function (pi: ExtensionAPI) {
       return { data: extracted.filtered };
     });
 
-    // Defer the initial query until after interactive mode finishes startup.
-    clearStartupQueryTimer();
-    startupQueryTimer = setTimeout(() => {
-      startupQueryTimer = undefined;
-      sendOsc11Query();
-    }, 0);
-    startupQueryTimer.unref?.();
+    // Defer initial query until interactive mode has started reading input.
+    scheduleStartupQuery();
+  });
+
+  pi.on("session_switch", async (_event, ctx) => {
+    if (!ctx.hasUI) return;
+    if (!ghosttyEnabled) return;
+
+    themeNames = resolveThemeNames(ctx.cwd);
+    scheduleStartupQuery();
   });
 
   pi.on("session_shutdown", async () => {
