@@ -1,10 +1,7 @@
-import { execFile, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import path from "node:path";
-import { promisify } from "node:util";
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-
-const execFileAsync = promisify(execFile);
 
 function sanitizeForFileName(value: string): string {
   const cleaned = value
@@ -34,7 +31,7 @@ function getPiInvocationCandidates(): Array<{ command: string; argsPrefix: strin
   return candidates;
 }
 
-async function runExportCommand(command: string, args: string[], cwd: string, timeoutMs: number): Promise<void> {
+async function runCommand(command: string, args: string[], cwd: string, timeoutMs: number): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
@@ -79,20 +76,15 @@ async function runExportCommand(command: string, args: string[], cwd: string, ti
 }
 
 export default function (pi: ExtensionAPI) {
-  pi.registerCommand("export-open", {
-    description: "Export current session to /tmp HTML via pi --export and open it (macOS)",
+  pi.registerCommand("open-export", {
+    description: "Export current session to /tmp HTML via pi --export and open it",
     handler: async (_args, ctx) => {
-      if (process.platform !== "darwin") {
-        if (ctx.hasUI) ctx.ui.notify("export-open: macOS only", "warning");
-        return;
-      }
-
       await ctx.waitForIdle();
 
       const sessionFile = ctx.sessionManager.getSessionFile();
       if (!sessionFile) {
         if (ctx.hasUI) {
-          ctx.ui.notify("export-open: no session file (ephemeral mode?)", "warning");
+          ctx.ui.notify("open-export: no session file (ephemeral mode?)", "warning");
         }
         return;
       }
@@ -112,7 +104,7 @@ export default function (pi: ExtensionAPI) {
 
         for (let attempt = 1; attempt <= 2; attempt += 1) {
           try {
-            await runExportCommand(invocation.command, exportArgs, ctx.cwd, 30_000);
+            await runCommand(invocation.command, exportArgs, ctx.cwd, 30_000);
             exportSucceeded = true;
             break;
           } catch (error) {
@@ -130,20 +122,20 @@ export default function (pi: ExtensionAPI) {
 
       if (!exportSucceeded) {
         const reason = failures[failures.length - 1] ?? "unknown export error";
-        if (ctx.hasUI) ctx.ui.notify(`export-open: export failed (${reason})`, "error");
+        if (ctx.hasUI) ctx.ui.notify(`open-export: export failed (${reason})`, "error");
         return;
       }
 
       try {
-        await execFileAsync("open", [outputPath], { timeout: 3_000 });
+        await runCommand("open", [outputPath], ctx.cwd, 5_000);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "unknown open error";
-        if (ctx.hasUI) ctx.ui.notify(`export-open: exported but failed to open (${message})`, "warning");
+        const reason = error instanceof Error ? error.message : "unknown open error";
+        if (ctx.hasUI) ctx.ui.notify(`open-export: exported but failed to open (${reason})`, "warning");
         return;
       }
 
       if (ctx.hasUI) {
-        ctx.ui.notify(`export-open: opened ${outputPath}`, "info");
+        ctx.ui.notify(`open-export: opened ${outputPath}`, "info");
       }
     },
   });

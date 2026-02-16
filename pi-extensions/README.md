@@ -2,6 +2,8 @@
 
 Local monorepo for independently installable [`pi`](https://github.com/badlogic/pi-mono) extensions.
 
+> Note: packages in this repo are designed and tested primarily on macOS.
+
 ## Packages
 
 ### [`pi-ghostty`](packages/pi-ghostty/)
@@ -32,8 +34,7 @@ Extension entrypoints:
   - calls built-in `pi --export` for the current session file
   - writes HTML to `/tmp`
   - opens the exported file in the default browser
-  - slash command: `/export-open`
-  - macOS only
+  - slash command: `/open-export`
 
 ## Install per extension
 
@@ -77,7 +78,7 @@ Fallback environment variables:
 ## Commands
 
 - `/ghostty-sync` — force a manual Ghostty OSC 11 theme sync
-- `/export-open` — export current session to `/tmp/*.html` and open it (macOS)
+- `/open-export` — export current session to `/tmp/*.html` and open it
 
 `pi-notifications` has no slash commands.
 
