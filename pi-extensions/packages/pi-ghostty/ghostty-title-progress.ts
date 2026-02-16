@@ -64,9 +64,14 @@ export default function (pi: ExtensionAPI) {
   function buildBaseTitle(): string {
     const parts: string[] = ["π", path.basename(process.cwd())];
     const sessionName = pi.getSessionName();
+    const thinkingLevel = pi.getThinkingLevel();
 
     if (sessionName) parts.push(sessionName);
-    if (currentModel) parts.push(currentModel);
+    if (currentModel) {
+      parts.push(`${currentModel} (${thinkingLevel})`);
+    } else {
+      parts.push(`thinking:${thinkingLevel}`);
+    }
 
     return parts.join(" · ");
   }
