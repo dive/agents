@@ -315,6 +315,7 @@ export default function (pi: ExtensionAPI) {
   };
 
   let lastAppliedMode: ThemeMode | undefined;
+  let currentCtx: ExtensionContext | undefined;
 
   function clearInputDebounce() {
     if (!inputDebounceTimer) return;
@@ -370,11 +371,13 @@ export default function (pi: ExtensionAPI) {
     inputDebounceTimer.unref?.();
   }
 
-  function processOscReplyPayload(ctx: ExtensionContext, payload: string, reason: "manual" | "auto") {
+  function processOscReplyPayload(payload: string, reason: "manual" | "auto") {
+    if (!currentCtx) return;
+
     const rgb = parseColorSpec(payload);
     if (!rgb) {
       if (reason === "manual") {
-        ctx.ui.notify(`ghostty-sync: unsupported OSC 11 payload: ${payload}`, "warning");
+        currentCtx.ui.notify(`ghostty-sync: unsupported OSC 11 payload: ${payload}`, "warning");
       }
       return;
     }
@@ -382,18 +385,18 @@ export default function (pi: ExtensionAPI) {
     const nextMode = inferTheme(rgb);
     if (nextMode === lastAppliedMode) {
       if (reason === "manual") {
-        ctx.ui.notify(`ghostty-sync: already ${nextMode} (rgb ${rgb.r},${rgb.g},${rgb.b})`, "info");
+        currentCtx.ui.notify(`ghostty-sync: already ${nextMode} (rgb ${rgb.r},${rgb.g},${rgb.b})`, "info");
       }
       return;
     }
 
-    const applied = applyTheme(ctx, nextMode, themeNames);
+    const applied = applyTheme(currentCtx, nextMode, themeNames);
     if (!applied) return;
 
     lastAppliedMode = nextMode;
 
     if (reason === "manual") {
-      ctx.ui.notify(
+      currentCtx.ui.notify(
         `ghostty-sync: switched to ${applied.mode} via OSC 11 (${rgb.r},${rgb.g},${rgb.b})`,
         "info",
       );
@@ -406,6 +409,7 @@ export default function (pi: ExtensionAPI) {
     clearReplyTimeout();
     stopTerminalListener?.();
     stopTerminalListener = undefined;
+    currentCtx = undefined;
 
     pendingReplies = 0;
     partialOscBuffer = "";
@@ -427,10 +431,8 @@ export default function (pi: ExtensionAPI) {
     },
   });
 
-  pi.on("session_start", async (_event, ctx) => {
-    if (!ctx.hasUI) return;
-    if (!ghosttyEnabled) return;
-
+  function setupSession(ctx: ExtensionContext) {
+    currentCtx = ctx;
     themeNames = resolveThemeNames(ctx.cwd);
 
     stopTerminalListener?.();
@@ -451,7 +453,7 @@ export default function (pi: ExtensionAPI) {
         pendingReplies = Math.max(0, pendingReplies - extracted.payloads.length);
         if (pendingReplies === 0) clearReplyTimeout();
         for (const payload of extracted.payloads) {
-          processOscReplyPayload(ctx, payload, "auto");
+          processOscReplyPayload(payload, "auto");
         }
       }
 
@@ -469,14 +471,18 @@ export default function (pi: ExtensionAPI) {
 
     // Defer initial query until interactive mode has started reading input.
     scheduleStartupQuery();
+  }
+
+  pi.on("session_start", async (_event, ctx) => {
+    if (!ctx.hasUI) return;
+    if (!ghosttyEnabled) return;
+    setupSession(ctx);
   });
 
   pi.on("session_switch", async (_event, ctx) => {
     if (!ctx.hasUI) return;
     if (!ghosttyEnabled) return;
-
-    themeNames = resolveThemeNames(ctx.cwd);
-    scheduleStartupQuery();
+    setupSession(ctx);
   });
 
   pi.on("session_shutdown", async () => {
