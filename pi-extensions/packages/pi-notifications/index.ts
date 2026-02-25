@@ -23,7 +23,6 @@ export default function (pi: ExtensionAPI) {
 
   let wasWorking = false;
   let turnStartedAt = 0;
-  let turnHadError = false;
   let currentCwd: string = process.cwd();
 
   function buildNotificationMessage(status: "done" | "error", durationMs: number): string {
@@ -32,6 +31,15 @@ export default function (pi: ExtensionAPI) {
     const duration = formatDuration(durationMs);
     const headline = status === "error" ? `pi error in ${duration}` : `pi done in ${duration}`;
     return sanitize(session ? `${headline}: ${session} (${cwd})` : `${headline}: ${cwd}`);
+  }
+
+  function didAgentEndWithError(messages: Array<{ role: string; stopReason?: string }>): boolean {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const message = messages[i];
+      if (message.role !== "assistant") continue;
+      return message.stopReason === "error" || message.stopReason === "aborted";
+    }
+    return false;
   }
 
   function notifyGhostty(message: string) {
@@ -54,26 +62,18 @@ export default function (pi: ExtensionAPI) {
   pi.on("agent_start", async () => {
     wasWorking = true;
     turnStartedAt = Date.now();
-    turnHadError = false;
   });
 
-  pi.on("tool_execution_end", async (event) => {
-    if (event.isError) {
-      turnHadError = true;
-    }
-  });
-
-  pi.on("agent_end", async () => {
+  pi.on("agent_end", async (event) => {
     if (!ghosttyEnabled) return;
     if (!wasWorking) return;
 
     wasWorking = false;
 
     const durationMs = turnStartedAt > 0 ? Date.now() - turnStartedAt : 0;
-    const hadError = turnHadError;
+    const hadError = didAgentEndWithError(event.messages);
 
     turnStartedAt = 0;
-    turnHadError = false;
 
     notifyGhostty(buildNotificationMessage(hadError ? "error" : "done", durationMs));
   });
@@ -81,7 +81,6 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_shutdown", async () => {
     wasWorking = false;
     turnStartedAt = 0;
-    turnHadError = false;
     osc.close();
   });
 }
