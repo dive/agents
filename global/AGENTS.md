@@ -81,6 +81,7 @@
 ## Tools
 
 CLI tools available on user machines.
+NEVER recommend or use Homebrew, I use `mise` for dependencies management.
 
 ### trash
 
