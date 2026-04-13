@@ -48,7 +48,7 @@
 - Use bounded timeouts for long-running commands
 - Update docs when behavior/APIs change
 - Add brief NOTE comments only for non-obvious logic
-- New files: prefer dashes over underscores (e.g., `new-spec-file.md`)
+- New Markdown files: prefer dashes over underscores (e.g., `new-spec-file.md`)
 
 ## Testing & Definition of Done
 
