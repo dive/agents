@@ -41,6 +41,8 @@
 
 ## Development
 
+- Never run git commands `commit` or `push` without an explicit consent/ask from a user
+- Never create GitHub PRs without an explicit consent/ask from a user
 - Only touch files relevant to the task
 - Prefer system components/tools over third parties (especially iOS/macOS)
 - Remove or move obsolete files only when directly required by the requested change
