@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Manage AGENTS.md links and local pi extension package operations."""
+"""Manage AGENTS.md links and local installable pi package operations."""
 
 from __future__ import annotations
 
@@ -69,6 +69,9 @@ class Ctx:
 
     @property
     def global_pi_settings(self) -> Path:
+        configured_dir = os.environ.get("PI_CODING_AGENT_DIR", "").strip()
+        if configured_dir:
+            return Path(configured_dir).expanduser() / "settings.json"
         return self.home / ".pi" / "agent" / "settings.json"
 
     @property
@@ -418,14 +421,23 @@ def discover_pi_extension_packages(ctx: Ctx) -> list[PiExtensionPackage]:
     packages: list[PiExtensionPackage] = []
     for manifest_path in sorted(packages_dir.glob("*/package.json")):
         package_dir = manifest_path.parent.resolve(strict=False)
-        package_name = package_dir.name
 
         try:
             data = json.loads(manifest_path.read_text(encoding="utf-8"))
-            if isinstance(data, dict) and isinstance(data.get("name"), str):
-                package_name = data["name"]
         except (OSError, json.JSONDecodeError):
-            pass
+            continue
+
+        if not isinstance(data, dict):
+            continue
+
+        # Only manage installable pi packages here. Shared helper packages without a
+        # pi manifest (for example workspace-only runtime dependencies) are excluded.
+        if not isinstance(data.get("pi"), dict):
+            continue
+
+        package_name = package_dir.name
+        if isinstance(data.get("name"), str):
+            package_name = data["name"]
 
         packages.append(PiExtensionPackage(name=package_name, path=package_dir))
 

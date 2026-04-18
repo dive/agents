@@ -34,9 +34,11 @@ python3 setup.py health
 
 ## 2) pi extension package management
 
-The repo discovers packages from:
+The repo discovers installable pi packages from:
 
-- `pi-extensions/packages/*/package.json`
+- `pi-extensions/packages/*/package.json` with a `pi` manifest
+
+Shared workspace-only helper packages are ignored by `setup.py extensions ...` commands.
 
 ### Health
 
