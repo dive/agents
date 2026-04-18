@@ -79,6 +79,13 @@ export default function (pi: ExtensionAPI) {
   pi.registerCommand("open-export", {
     description: "Export current session to /tmp HTML via pi --export and open it (macOS only)",
     handler: async (_args, ctx) => {
+      if (process.platform !== "darwin") {
+        if (ctx.hasUI) {
+          ctx.ui.notify("open-export: macOS only (uses the open command)", "warning");
+        }
+        return;
+      }
+
       await ctx.waitForIdle();
 
       const sessionFile = ctx.sessionManager.getSessionFile();
