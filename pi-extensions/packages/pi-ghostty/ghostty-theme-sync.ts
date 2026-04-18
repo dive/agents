@@ -38,7 +38,7 @@ import path from "node:path";
 
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 
-import { createOscWriter, isGhosttyTerminal } from "../pi-terminal-osc/terminal-osc";
+import { createOscWriter, isGhosttyTerminal } from "pi-terminal-osc";
 
 const OSC11_QUERY = "11;?";
 const OSC11_PREFIX = "\x1b]11;";
