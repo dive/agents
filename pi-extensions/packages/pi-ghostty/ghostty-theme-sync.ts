@@ -11,7 +11,7 @@
  *
  * Theme override sources (highest priority first):
  * 1) project settings: .pi/settings.json
- * 2) global settings:  ~/.pi/agent/settings.json
+ * 2) global settings:  $PI_CODING_AGENT_DIR/settings.json or ~/.pi/agent/settings.json
  * 3) env vars:         PI_GHOSTTY_THEME_DARK / PI_GHOSTTY_THEME_LIGHT
  * 4) built-in defaults: dark / light
  *
@@ -109,8 +109,13 @@ function readThemeNamesFromSettings(settings: unknown): Partial<ThemeNames> {
   };
 }
 
+function resolvePiAgentDir(): string {
+  const configured = process.env.PI_CODING_AGENT_DIR?.trim();
+  return configured ? configured : path.join(os.homedir(), ".pi", "agent");
+}
+
 function resolveThemeNames(cwd: string): ThemeNames {
-  const globalSettingsPath = path.join(os.homedir(), ".pi", "agent", "settings.json");
+  const globalSettingsPath = path.join(resolvePiAgentDir(), "settings.json");
   const projectSettingsPath = path.join(cwd, ".pi", "settings.json");
 
   const globalNames = readThemeNamesFromSettings(readJsonFile(globalSettingsPath));

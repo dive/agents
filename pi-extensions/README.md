@@ -57,7 +57,7 @@ pi install -l "$REPO_DIR/pi-extensions/packages/pi-session-export-html"
 `ghostty-theme-sync.ts` reads theme names from settings (project overrides global):
 
 - `.pi/settings.json`
-- `~/.pi/agent/settings.json`
+- `$PI_CODING_AGENT_DIR/settings.json` (or `~/.pi/agent/settings.json` when the env var is unset)
 
 ```json
 {
