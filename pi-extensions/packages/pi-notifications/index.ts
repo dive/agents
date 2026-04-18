@@ -55,10 +55,6 @@ export default function (pi: ExtensionAPI) {
     currentCwd = ctx.cwd;
   });
 
-  pi.on("session_switch", async (_event, ctx) => {
-    currentCwd = ctx.cwd;
-  });
-
   pi.on("agent_start", async () => {
     wasWorking = true;
     turnStartedAt = Date.now();

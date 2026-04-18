@@ -479,12 +479,6 @@ export default function (pi: ExtensionAPI) {
     setupSession(ctx);
   });
 
-  pi.on("session_switch", async (_event, ctx) => {
-    if (!ctx.hasUI) return;
-    if (!ghosttyEnabled) return;
-    setupSession(ctx);
-  });
-
   pi.on("session_shutdown", async () => {
     reset();
   });

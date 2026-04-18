@@ -252,13 +252,6 @@ export default function (pi: ExtensionAPI) {
     if (!isWorking) setIdleTitle(ctx);
   });
 
-  pi.on("session_switch", async (_event, ctx) => {
-    if (!ctx.hasUI) return;
-    currentCwd = ctx.cwd;
-    startGitRefreshLoop(ctx);
-    if (!isWorking) setIdleTitle(ctx);
-  });
-
   pi.on("agent_start", async (_event, ctx) => {
     if (!ctx.hasUI) return;
     lastTurnHadError = false;
