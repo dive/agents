@@ -9,6 +9,14 @@
     "url": "git+https://github.com/dive/agents.git"
   },
   "workspaces": ["packages/*"],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@mariozechner/pi-coding-agent": "^0.67.68",
+    "@types/node": "^24.7.2",
+    "typescript": "^5.9.3"
+  },
   "pi": {
     "extensions": [
       "./packages/pi-ghostty/ghostty-title-progress.ts",
