@@ -1,6 +1,13 @@
 {
   "name": "pi-terminal-osc",
   "version": "0.1.0",
+  "description": "Shared OSC terminal helpers for Ghostty-focused pi extensions.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dive/agents.git",
+    "directory": "pi-extensions/packages/pi-terminal-osc"
+  },
   "main": "./index.ts",
   "exports": "./index.ts"
 }

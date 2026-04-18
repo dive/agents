@@ -1,6 +1,13 @@
 {
   "name": "pi-extensions-monorepo",
+  "version": "0.1.0",
   "private": true,
+  "description": "Workspace for local pi extension packages and shared utilities.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dive/agents.git"
+  },
   "workspaces": ["packages/*"],
   "pi": {
     "extensions": [

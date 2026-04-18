@@ -1,7 +1,17 @@
 {
   "name": "pi-notifications",
-  "private": true,
+  "version": "0.1.0",
+  "description": "Ghostty desktop notifications for pi agent completions.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dive/agents.git",
+    "directory": "pi-extensions/packages/pi-notifications"
+  },
   "keywords": ["pi-package"],
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*"
+  },
   "dependencies": {
     "pi-terminal-osc": "0.1.0"
   },

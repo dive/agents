@@ -1,7 +1,17 @@
 {
   "name": "pi-session-export-html",
-  "private": true,
+  "version": "0.1.0",
+  "description": "Export the current pi session to HTML and open it in the default browser.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dive/agents.git",
+    "directory": "pi-extensions/packages/pi-session-export-html"
+  },
   "keywords": ["pi-package"],
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*"
+  },
   "pi": {
     "extensions": ["./index.ts"]
   }

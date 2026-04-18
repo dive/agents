@@ -1,7 +1,17 @@
 {
   "name": "pi-ghostty",
-  "private": true,
+  "version": "0.1.0",
+  "description": "Ghostty-focused pi extensions for title progress and automatic light/dark theme sync.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dive/agents.git",
+    "directory": "pi-extensions/packages/pi-ghostty"
+  },
   "keywords": ["pi-package"],
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*"
+  },
   "dependencies": {
     "pi-terminal-osc": "0.1.0"
   },
