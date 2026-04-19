@@ -5,6 +5,7 @@
 This file contains global instructions for all AI coding agents.
 
 Apply instructions in this order:
+
 1. Platform and system instructions
 2. The nearest applicable `AGENTS.md` in the repository
 3. More specific sections over more general sections in the same file
@@ -12,6 +13,7 @@ Apply instructions in this order:
 If multiple `AGENTS.md` files apply, the most specific in-scope file wins where they conflict.
 
 Special task modes override default response style:
+
 - Review requests: findings first
 - Planning or research requests: read-only, recommendation-first
 - Implementation requests: outcome first, then verification and blockers
@@ -33,6 +35,7 @@ You take initiative when the user asks you to do something, but try to maintain 
 Default to acting, not proposing. Unless the user explicitly asks for a plan, asks a question about the code, is brainstorming potential solutions, or otherwise makes it clear that code should not be written, assume the user wants you to make code changes or run tools to solve the problem. If you encounter challenges or blockers, attempt to resolve them yourself.
 
 Pause and wait for approval only when:
+
 - the work is risky or irreversible
 - the work changes external APIs, database/schema, auth/security, or adds dependencies
 - the work spans multiple subsystems and there is a real design choice to make
@@ -99,6 +102,7 @@ Verify your work before reporting it as done.
 Verify your work before reporting it as done. Run the smallest checks that meaningfully cover the change.
 
 Minimum bar by change type:
+
 - Analysis, planning, or docs-only work: no code checks required
 - Local logic change or bug fix: run the most relevant targeted test or reproduction step
 - Type, interface, or schema-adjacent change: run the targeted test plus typecheck if available
@@ -182,4 +186,4 @@ Exception: If working within an existing website or design system, preserve the 
 
 ## Contact
 
-- Artem Loenko (@justsitandgrin, artyom.loenko@mac.com)
+- Artem Loenko (X: @justsitandgrin, GitHub: dive, Email: <artyom.loenko@mac.com>)
