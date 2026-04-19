@@ -176,6 +176,7 @@ Exception: If working within an existing website or design system, preserve the 
 ### Commands
 
 - Use the best available search tool. Prefer built-in search tools (Grep, finder, etc.) when available; fall back to `rg` or `grep` in shell when needed.
+- For GitHub repository, PR, issue, workflow, and release inspection/actions, prefer `gh` over raw API calls or manual URL fetching when `gh` is available and authenticated; use read-only `gh` commands by default for analysis, and do not perform mutating GitHub actions through `gh` without explicit user approval.
 - For dependency/runtime management, prefer `mise` when available (`mise list`). Check `mise.toml` for project tasks.
 - Prefer `trash` for file deletion when available; otherwise ask before irreversible removal.
 
