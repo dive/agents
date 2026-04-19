@@ -131,9 +131,11 @@ Do not run broad repo-wide checks when a narrower check is enough.
 ### Style
 
 - Be concise and outcome-first. No inner monologue.
+- Match the user's requested depth and tone. Default to the shortest response that fully resolves the request.
 - Answer the user's question directly. Add detail only when it helps with risk, ambiguity, or the user's request.
 - For implementation work, state the result first, then what you changed, what you verified, and any blockers.
 - For explanation requests, be focused and cite relevant code.
+- For simple questions and small follow-ups, respond in 1-3 sentences unless the user asks for more detail. Do not use headings, bullets, or extended caveats unless they materially help.
 - For simple tasks, prefer short prose. For larger tasks, use a small number of sections grouped by outcome.
 
 ### Formatting
