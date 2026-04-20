@@ -2,10 +2,11 @@
 
 This guide covers operational commands for this repository.
 
-The repo supports three setup flows:
+The repo supports four setup flows:
 
 - `global/AGENTS.md` symlink management
 - Agent Skills storage under `skills/` plus symlinks into `~/.agents/skills/`
+- pi prompt templates under `destroot/pi/agent/prompts/` plus symlinks into `~/.pi/agent/prompts/`
 - local `pi` extension package management
 
 For package feature details, see:
@@ -69,7 +70,37 @@ python3 setup.py skills link --replace-symlinks
 
 ---
 
-## 3) pi extension package management
+## 3) Pi prompt template management
+
+Store each pi prompt template as a direct Markdown file under:
+
+- `destroot/pi/agent/prompts/*.md`
+
+This mirrors the layout used in the `dot` repo, where `destroot/pi/agent/...` maps to `~/.pi/agent/...`.
+
+These commands discover direct `*.md` files in the repo prompts root and link each one into:
+
+- `~/.pi/agent/prompts/<name>.md`
+
+### Commands
+
+```bash
+python3 setup.py prompts list
+python3 setup.py prompts health
+python3 setup.py prompts health --strict
+python3 setup.py prompts link
+python3 setup.py prompts link --replace-symlinks
+```
+
+### Notes
+
+- Prompt template discovery is non-recursive, matching pi's prompt template loading rules.
+- `prompts link` is safe by default and will not replace existing regular files.
+- `prompts link --replace-symlinks` only replaces stale symlinks.
+
+---
+
+## 4) pi extension package management
 
 The repo discovers installable pi packages from:
 
@@ -119,7 +150,7 @@ python3 setup.py extensions uninstall --scope local --package pi-ghostty --dry-r
 
 ---
 
-## 4) mise task shortcuts
+## 5) mise task shortcuts
 
 Equivalent shortcuts in `mise.toml`:
 
@@ -135,6 +166,12 @@ mise run skills-list
 mise run skills-health
 mise run skills-link
 mise run skills-link-replace
+
+# pi prompt template tasks
+mise run prompts-list
+mise run prompts-health
+mise run prompts-link
+mise run prompts-link-replace
 
 # pi extension tasks
 mise run pi-extensions-health

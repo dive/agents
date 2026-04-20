@@ -49,6 +49,12 @@ class Skill:
     warnings: tuple[str, ...] = ()
 
 
+@dataclass(frozen=True)
+class PromptTemplate:
+    name: str
+    path: Path
+
+
 # Direct links managed by this script.
 # Sources (2026-02-15):
 # - Codex: https://developers.openai.com/codex/guides/agents-md.md
@@ -91,6 +97,14 @@ class Ctx:
     @property
     def user_skills_root(self) -> Path:
         return self.home / ".agents" / "skills"
+
+    @property
+    def prompts_root(self) -> Path:
+        return self.repo_root / "destroot" / "pi" / "agent" / "prompts"
+
+    @property
+    def user_pi_prompts_root(self) -> Path:
+        return self.home / ".pi" / "agent" / "prompts"
 
     @property
     def global_pi_settings(self) -> Path:
@@ -153,6 +167,16 @@ class SkillsHealthReport:
     missing: list[tuple[Skill, Path]] = field(default_factory=list)
     invalid: list[Skill] = field(default_factory=list)
     warnings: list[Skill] = field(default_factory=list)
+
+
+@dataclass
+class PromptTemplatesHealthReport:
+    discovered: list[PromptTemplate] = field(default_factory=list)
+    healthy: list[tuple[PromptTemplate, Path]] = field(default_factory=list)
+    broken: list[tuple[PromptTemplate, Path, object]] = field(default_factory=list)
+    mismatch: list[tuple[PromptTemplate, Path, object]] = field(default_factory=list)
+    conflict: list[tuple[PromptTemplate, Path]] = field(default_factory=list)
+    missing: list[tuple[PromptTemplate, Path]] = field(default_factory=list)
 
 
 def get_ctx() -> Ctx:
@@ -761,6 +785,149 @@ def skills_link(replace_symlinks: bool) -> int:
     return 0
 
 
+def discover_prompt_templates(ctx: Ctx) -> list[PromptTemplate]:
+    prompts_root = ctx.prompts_root
+    if not prompts_root.exists():
+        return []
+
+    prompts: list[PromptTemplate] = []
+    for prompt_path in sorted(prompts_root.glob("*.md")):
+        if not prompt_path.is_file():
+            continue
+        prompts.append(PromptTemplate(name=prompt_path.stem, path=prompt_path.resolve(strict=False)))
+
+    return prompts
+
+
+def collect_prompt_templates_health(ctx: Ctx) -> PromptTemplatesHealthReport:
+    report = PromptTemplatesHealthReport(discovered=discover_prompt_templates(ctx))
+
+    for prompt in report.discovered:
+        dest = ctx.user_pi_prompts_root / prompt.path.name
+        if dest.is_symlink():
+            if not dest.exists():
+                try:
+                    report.broken.append((prompt, dest, dest.readlink()))
+                except OSError:
+                    report.broken.append((prompt, dest, "???"))
+                continue
+
+            if symlink_points_to(dest, prompt.path):
+                report.healthy.append((prompt, dest))
+            else:
+                try:
+                    report.mismatch.append((prompt, dest, dest.readlink()))
+                except OSError:
+                    report.mismatch.append((prompt, dest, "???"))
+            continue
+
+        if dest.exists():
+            report.conflict.append((prompt, dest))
+        else:
+            report.missing.append((prompt, dest))
+
+    return report
+
+
+def print_prompt_templates_health(report: PromptTemplatesHealthReport, ctx: Ctx) -> None:
+    print("Pi prompt templates health:")
+    print(f"\nRepo prompts root: {ctx.fmt(ctx.prompts_root)}")
+    print(f"User prompts root: {ctx.fmt(ctx.user_pi_prompts_root)}")
+
+    if not report.discovered:
+        print("\nNo prompt templates found under the repo prompts root.")
+        return
+
+    print(f"\nDiscovered prompt templates ({len(report.discovered)}):")
+    for prompt in report.discovered:
+        print(f"  - /{prompt.name}: {ctx.fmt(prompt.path)}")
+
+    if report.healthy:
+        print(f"\n✅ Linked ({len(report.healthy)}):")
+        for prompt, dest in report.healthy:
+            print(f"  /{prompt.name}: {ctx.fmt(dest)}")
+
+    if report.broken:
+        print(f"\n❌ Broken ({len(report.broken)}):")
+        for prompt, dest, link_target in report.broken:
+            print(f"  /{prompt.name}: {ctx.fmt(dest)} -> {link_target}")
+
+    if report.mismatch:
+        print(f"\n⚠️  Mismatch ({len(report.mismatch)}):")
+        for prompt, dest, link_target in report.mismatch:
+            print(f"  /{prompt.name}: {ctx.fmt(dest)} -> {link_target}")
+
+    if report.conflict:
+        print(f"\n⛔ Conflict ({len(report.conflict)}):")
+        for prompt, dest in report.conflict:
+            print(f"  /{prompt.name}: {ctx.fmt(dest)} (exists but is not a symlink)")
+
+    if report.missing:
+        print(f"\n⚪ Missing ({len(report.missing)}):")
+        for prompt, dest in report.missing:
+            print(f"  /{prompt.name}: {ctx.fmt(dest)}")
+
+    if not (report.broken or report.mismatch or report.conflict or report.missing):
+        print("\nAll discovered prompt templates are linked.")
+
+
+def prompt_templates_list() -> int:
+    ctx = get_ctx()
+    prompts = discover_prompt_templates(ctx)
+
+    print(f"Repo prompts root: {ctx.fmt(ctx.prompts_root)}")
+    print(f"User prompts root: {ctx.fmt(ctx.user_pi_prompts_root)}\n")
+
+    if not prompts:
+        print("No prompt templates discovered.")
+        print("Add templates as <REPO>/destroot/pi/agent/prompts/<name>.md.")
+        return 0
+
+    print(f"Discovered prompt templates ({len(prompts)}):")
+    for prompt in prompts:
+        print(f"- /{prompt.name}: {ctx.fmt(prompt.path)}")
+
+    return 0
+
+
+def prompt_templates_health(strict: bool = False) -> int:
+    ctx = get_ctx()
+    report = collect_prompt_templates_health(ctx)
+    print_prompt_templates_health(report, ctx)
+
+    if not strict:
+        return 0
+
+    if report.broken or report.mismatch or report.conflict or report.missing:
+        return 1
+    return 0
+
+
+def prompt_templates_link(replace_symlinks: bool) -> int:
+    ctx = get_ctx()
+    prompts = discover_prompt_templates(ctx)
+
+    print(f"Linking prompt templates from {ctx.fmt(ctx.prompts_root)} to {ctx.fmt(ctx.user_pi_prompts_root)}")
+
+    if not prompts:
+        print("\nInfo: no prompt templates discovered.")
+        return 0
+
+    ok = True
+    for prompt in prompts:
+        print(f"\n[/{prompt.name}]")
+        dest = ctx.user_pi_prompts_root / prompt.path.name
+        if not ensure_symlink(prompt.path, dest, ctx, replace_symlinks=replace_symlinks):
+            ok = False
+
+    if not ok:
+        print("\n❌ Prompt template link completed with errors. Resolve conflicts and re-run.")
+        return 1
+
+    print("\n✅ Prompt template link completed.")
+    return 0
+
+
 SUPPORTED_PI_SCOPES = ("global", "local", "both")
 _NON_LOCAL_PACKAGE_PREFIXES = ("npm:", "git:", "https://", "http://", "ssh://", "git://")
 
@@ -1092,7 +1259,9 @@ def pi_extensions_uninstall(scope: str, package_names: Optional[list[str]], dry_
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="AGENTS.md / Agent Skills / pi-extensions setup helper")
+    parser = argparse.ArgumentParser(
+        description="AGENTS.md / Agent Skills / pi prompts / pi-extensions setup helper"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     link_parser = subparsers.add_parser("link", help="Create AGENTS.md symlinks")
@@ -1119,6 +1288,25 @@ def build_parser() -> argparse.ArgumentParser:
 
     skills_link_parser = skills_subparsers.add_parser("link", help="Link repo skills into ~/.agents/skills")
     skills_link_parser.add_argument(
+        "--replace-symlinks",
+        action="store_true",
+        help="Replace symlinks that point somewhere else",
+    )
+
+    prompts_parser = subparsers.add_parser("prompts", help="Manage repo pi prompt templates")
+    prompts_subparsers = prompts_parser.add_subparsers(dest="prompts_command", required=True)
+
+    prompts_subparsers.add_parser("list", help="List discovered prompt templates")
+
+    prompts_health_parser = prompts_subparsers.add_parser("health", help="Check pi prompt template link health")
+    prompts_health_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero if discovered prompt templates are not linked",
+    )
+
+    prompts_link_parser = prompts_subparsers.add_parser("link", help="Link repo prompt templates into ~/.pi/agent/prompts")
+    prompts_link_parser.add_argument(
         "--replace-symlinks",
         action="store_true",
         help="Replace symlinks that point somewhere else",
@@ -1201,6 +1389,15 @@ def main(argv: Optional[list[str]] = None) -> int:
         if args.skills_command == "link":
             return skills_link(replace_symlinks=args.replace_symlinks)
         parser.error(f"Unknown skills command: {args.skills_command}")
+        return 1
+    if args.command == "prompts":
+        if args.prompts_command == "list":
+            return prompt_templates_list()
+        if args.prompts_command == "health":
+            return prompt_templates_health(strict=args.strict)
+        if args.prompts_command == "link":
+            return prompt_templates_link(replace_symlinks=args.replace_symlinks)
+        parser.error(f"Unknown prompts command: {args.prompts_command}")
         return 1
     if args.command == "extensions":
         if args.extensions_command == "health":

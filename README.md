@@ -6,7 +6,8 @@ Utilities and extension packages for coding agents (focused on [`pi`](https://gi
 
 - [`global/AGENTS.md`](global/AGENTS.md) — shared instructions used across coding tools
 - [`skills/`](skills/) — repo-managed Agent Skills, linked into `~/.agents/skills/`
-- [`setup.py`](setup.py) — helper for AGENTS.md links, Agent Skills links, and `pi` package operations
+- [`destroot/pi/agent/prompts/`](destroot/pi/agent/prompts/) — repo-managed pi prompt templates, linked into `~/.pi/agent/prompts/`
+- [`setup.py`](setup.py) — helper for AGENTS.md links, Agent Skills links, pi prompt template links, and `pi` package operations
 - [`pi-extensions/`](pi-extensions/) — installable `pi` extension packages
 
 ## pi extension packages
@@ -41,10 +42,16 @@ pi install -l "$REPO_DIR/pi-extensions/packages/pi-session-export-html"
 - Link repo skills into `~/.agents/skills/` with `python3 setup.py skills link`
 - Inspect discovery, validation, and link state with `python3 setup.py skills health`
 
+## Pi Prompt Templates
+
+- Store each template under `destroot/pi/agent/prompts/<name>.md`
+- Link repo templates into `~/.pi/agent/prompts/` with `python3 setup.py prompts link`
+- Inspect discovery and link state with `python3 setup.py prompts health`
+
 ## Setup and operations
 
 - Setup guide: [`docs/setup-guide.md`](docs/setup-guide.md)
-- Includes AGENTS.md, Agent Skills, and `pi` package CLI commands plus `mise` task shortcuts
+- Includes AGENTS.md, Agent Skills, pi prompt templates, and `pi` package CLI commands plus `mise` task shortcuts
 
 ## License
 

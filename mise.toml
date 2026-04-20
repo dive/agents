@@ -30,6 +30,22 @@ run = "python3 setup.py skills link"
 description = "Link repo Agent Skills and replace stale symlinks"
 run = "python3 setup.py skills link --replace-symlinks"
 
+[tasks.prompts-list]
+description = "List repo pi prompt templates"
+run = "python3 setup.py prompts list"
+
+[tasks.prompts-health]
+description = "Check pi prompt template health"
+run = "python3 setup.py prompts health"
+
+[tasks.prompts-link]
+description = "Link repo pi prompt templates into ~/.pi/agent/prompts"
+run = "python3 setup.py prompts link"
+
+[tasks.prompts-link-replace]
+description = "Link repo pi prompt templates and replace stale symlinks"
+run = "python3 setup.py prompts link --replace-symlinks"
+
 [tasks.pi-extensions-health]
 description = "Check pi-extensions install health (global + local)"
 run = "python3 setup.py extensions health --scope both"
