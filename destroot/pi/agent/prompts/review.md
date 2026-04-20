@@ -19,7 +19,7 @@ General review rules:
 
 - Stay in review mode. Do not edit files, commit, or make code changes.
 - Be thorough. Read the diff first, then read any additional surrounding files needed to understand behavior.
-- Review file-by-file and hunk-by-hunk.
+- Categorize findings into the Good, Bad, and Ugly sections, citing the relevant file and line range in each bullet.
 - Focus on correctness, regressions, security, performance, maintainability, overly hacky code, unnecessary code, shared mutable state risks, and missing tests.
 - Evaluate abstraction fit in both directions:
   - flag unnecessary indirection or over-abstraction
@@ -29,7 +29,6 @@ General review rules:
   - introduce or extract a shared concept
 - Avoid speculative refactors. Recommend changes only when they improve the current code.
 - Always explain what changed in a hunk, include the file and line range when available, and relate it to nearby code or other changed hunks when relevant.
-- If you find no issues, say so explicitly under `Bad` and `Ugly`.
 
 If reviewing a GitHub PR:
 
@@ -44,7 +43,9 @@ If reviewing a GitHub PR:
 - Start with commands equivalent to:
   - `gh pr view "$ARGUMENTS" --json number,title,body,baseRefName,headRefName,author,changedFiles,additions,deletions,url,commits`
   - `gh pr view "$ARGUMENTS" --comments`
-  - `gh pr diff "$ARGUMENTS"`
+- Check the `additions` and `deletions` counts from the JSON metadata.
+  - If the total is small (under ~3000 lines), fetch the full diff: `gh pr diff "$ARGUMENTS"`
+  - If the total is large, start with `gh pr diff "$ARGUMENTS" --name-only` and then fetch diffs for individual files or ranges as needed during review.
 
 3. Identify linked issues referenced in the PR body, comments, commit messages, or cross links.
 
@@ -62,18 +63,18 @@ If reviewing the working tree:
 
 - Start with commands equivalent to:
   - `git status --short`
-  - `git diff --cached`
-  - `git diff`
+  - `git diff HEAD`
+- If merge conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`) appear in the diff, flag them immediately and skip detailed review of those hunks.
 
-2. Review both staged and unstaged tracked changes.
+2. Review all uncommitted changes (staged and unstaged) together.
 3. If untracked files appear relevant, read them directly when needed.
 4. Since there is no PR metadata, skip PR-only steps that do not apply.
 
 What to produce:
 
 1. Generate a high-level summary of the changes.
-2. Go file-by-file and review each changed hunk.
-3. For each important hunk, explain:
+2. Group findings into the Good, Bad, and Ugly categories below.
+3. For each finding, explain:
 
 - what changed
 - why it may be good, risky, bad, or subtle
