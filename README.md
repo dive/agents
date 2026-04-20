@@ -5,7 +5,8 @@ Utilities and extension packages for coding agents (focused on [`pi`](https://gi
 ## What is in this repo
 
 - [`global/AGENTS.md`](global/AGENTS.md) — shared instructions used across coding tools
-- [`setup.py`](setup.py) — helper for AGENTS link management + `pi` package operations
+- [`skills/`](skills/) — repo-managed Agent Skills, linked into `~/.agents/skills/`
+- [`setup.py`](setup.py) — helper for AGENTS.md links, Agent Skills links, and `pi` package operations
 - [`pi-extensions/`](pi-extensions/) — installable `pi` extension packages
 
 ## pi extension packages
@@ -34,10 +35,16 @@ pi install -l "$REPO_DIR/pi-extensions/packages/pi-notifications"
 pi install -l "$REPO_DIR/pi-extensions/packages/pi-session-export-html"
 ```
 
+## Agent Skills
+
+- Store each skill under `skills/<skill-name>/SKILL.md`
+- Link repo skills into `~/.agents/skills/` with `python3 setup.py skills link`
+- Inspect discovery, validation, and link state with `python3 setup.py skills health`
+
 ## Setup and operations
 
 - Setup guide: [`docs/setup-guide.md`](docs/setup-guide.md)
-- Includes both CLI commands and `mise` task shortcuts
+- Includes AGENTS.md, Agent Skills, and `pi` package CLI commands plus `mise` task shortcuts
 
 ## License
 

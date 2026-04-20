@@ -14,6 +14,22 @@ run = "python3 setup.py link --replace-symlinks"
 description = "Check AGENTS.md link health"
 run = "python3 setup.py health"
 
+[tasks.skills-list]
+description = "List repo Agent Skills"
+run = "python3 setup.py skills list"
+
+[tasks.skills-health]
+description = "Check Agent Skills health"
+run = "python3 setup.py skills health"
+
+[tasks.skills-link]
+description = "Link repo Agent Skills into ~/.agents/skills"
+run = "python3 setup.py skills link"
+
+[tasks.skills-link-replace]
+description = "Link repo Agent Skills and replace stale symlinks"
+run = "python3 setup.py skills link --replace-symlinks"
+
 [tasks.pi-extensions-health]
 description = "Check pi-extensions install health (global + local)"
 run = "python3 setup.py extensions health --scope both"

@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
-"""Manage AGENTS.md links and local installable pi package operations."""
+"""Manage AGENTS.md links, Agent Skills links, and local installable pi package operations."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
+
+
+SKILL_NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+SKILL_BLOCK_SCALAR_MARKERS = {"", "|", ">", "|-", ">-", "|+", ">+"}
 
 
 @dataclass(frozen=True)
@@ -30,6 +35,18 @@ class GlobalFallbackTool:
 class PiExtensionPackage:
     name: str
     path: Path
+
+
+@dataclass(frozen=True)
+class Skill:
+    name: Optional[str]
+    dir_name: str
+    path: Path
+    manifest_path: Path
+    description: Optional[str]
+    compatibility: Optional[str]
+    errors: tuple[str, ...] = ()
+    warnings: tuple[str, ...] = ()
 
 
 # Direct links managed by this script.
@@ -66,6 +83,14 @@ class Ctx:
     @property
     def global_fallback_dest(self) -> Path:
         return self.home / ".config" / "AGENTS.md"
+
+    @property
+    def skills_root(self) -> Path:
+        return self.repo_root / "skills"
+
+    @property
+    def user_skills_root(self) -> Path:
+        return self.home / ".agents" / "skills"
 
     @property
     def global_pi_settings(self) -> Path:
@@ -116,6 +141,18 @@ class PiExtensionsHealthReport:
     local_settings_path: Optional[Path] = None
     global_settings_error: Optional[str] = None
     local_settings_error: Optional[str] = None
+
+
+@dataclass
+class SkillsHealthReport:
+    discovered: list[Skill] = field(default_factory=list)
+    healthy: list[tuple[Skill, Path]] = field(default_factory=list)
+    broken: list[tuple[Skill, Path, object]] = field(default_factory=list)
+    mismatch: list[tuple[Skill, Path, object]] = field(default_factory=list)
+    conflict: list[tuple[Skill, Path]] = field(default_factory=list)
+    missing: list[tuple[Skill, Path]] = field(default_factory=list)
+    invalid: list[Skill] = field(default_factory=list)
+    warnings: list[Skill] = field(default_factory=list)
 
 
 def get_ctx() -> Ctx:
@@ -406,6 +443,321 @@ def list_targets() -> int:
     for tool in GLOBAL_FALLBACK_TOOLS:
         print(f"- {tool.tool}")
 
+    return 0
+
+
+def _split_frontmatter(text: str) -> tuple[Optional[list[str]], Optional[list[str]], Optional[str]]:
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return None, None, "missing opening YAML frontmatter delimiter"
+
+    for idx in range(1, len(lines)):
+        if lines[idx].strip() == "---":
+            return lines[1:idx], lines[idx + 1 :], None
+
+    return None, None, "missing closing YAML frontmatter delimiter"
+
+
+def _strip_yaml_quotes(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+        return value[1:-1]
+    return value
+
+
+def _extract_frontmatter_value(frontmatter_lines: list[str], key: str) -> Optional[str]:
+    prefix = f"{key}:"
+    idx = 0
+    while idx < len(frontmatter_lines):
+        line = frontmatter_lines[idx]
+        if line.startswith((" ", "\t")) or not line.startswith(prefix):
+            idx += 1
+            continue
+
+        remainder = line[len(prefix) :].strip()
+        if remainder not in SKILL_BLOCK_SCALAR_MARKERS:
+            return _strip_yaml_quotes(remainder)
+
+        idx += 1
+        block: list[str] = []
+        while idx < len(frontmatter_lines):
+            block_line = frontmatter_lines[idx]
+            if block_line.startswith("  "):
+                block.append(block_line[2:])
+                idx += 1
+                continue
+            if block_line.startswith("\t"):
+                block.append(block_line.lstrip("\t"))
+                idx += 1
+                continue
+            if not block_line:
+                block.append("")
+                idx += 1
+                continue
+            break
+
+        return "\n".join(block).strip()
+
+    return None
+
+
+def _load_skill(skill_dir: Path) -> Skill:
+    manifest_path = skill_dir / "SKILL.md"
+    errors: list[str] = []
+    warnings: list[str] = []
+    name: Optional[str] = None
+    description: Optional[str] = None
+    compatibility: Optional[str] = None
+
+    try:
+        text = manifest_path.read_text(encoding="utf-8")
+    except OSError as err:
+        errors.append(f"failed reading SKILL.md: {err}")
+        return Skill(
+            name=None,
+            dir_name=skill_dir.name,
+            path=skill_dir,
+            manifest_path=manifest_path,
+            description=None,
+            compatibility=None,
+            errors=tuple(errors),
+            warnings=tuple(warnings),
+        )
+
+    frontmatter_lines, body_lines, frontmatter_error = _split_frontmatter(text)
+    if frontmatter_error is not None or frontmatter_lines is None or body_lines is None:
+        errors.append(frontmatter_error or "invalid frontmatter")
+    else:
+        name = _extract_frontmatter_value(frontmatter_lines, "name")
+        description = _extract_frontmatter_value(frontmatter_lines, "description")
+        compatibility = _extract_frontmatter_value(frontmatter_lines, "compatibility")
+
+        if not name:
+            errors.append("missing required `name` field")
+        else:
+            if len(name) > 64:
+                errors.append("`name` must be at most 64 characters")
+            if not SKILL_NAME_RE.fullmatch(name):
+                errors.append(
+                    "`name` must use lowercase letters, numbers, and single hyphens only"
+                )
+            if skill_dir.name != name:
+                errors.append("`name` must match the parent directory name")
+
+        if not description:
+            errors.append("missing required `description` field")
+        elif len(description) > 1024:
+            errors.append("`description` must be at most 1024 characters")
+
+        if compatibility is not None and len(compatibility) > 500:
+            errors.append("`compatibility` must be at most 500 characters")
+
+        if not any(line.strip() for line in body_lines):
+            warnings.append("SKILL.md body is empty")
+        if len(text.splitlines()) > 500:
+            warnings.append("SKILL.md exceeds the recommended 500 line limit")
+
+    return Skill(
+        name=name,
+        dir_name=skill_dir.name,
+        path=skill_dir,
+        manifest_path=manifest_path,
+        description=description,
+        compatibility=compatibility,
+        errors=tuple(errors),
+        warnings=tuple(warnings),
+    )
+
+
+def discover_skills(ctx: Ctx) -> list[Skill]:
+    skills_root = ctx.skills_root
+    if not skills_root.exists():
+        return []
+
+    skills: list[Skill] = []
+    for skill_dir in sorted(skills_root.iterdir()):
+        if not skill_dir.is_dir():
+            continue
+        manifest_path = skill_dir / "SKILL.md"
+        if not manifest_path.exists() or not manifest_path.is_file():
+            continue
+        skills.append(_load_skill(skill_dir.resolve(strict=False)))
+
+    return skills
+
+
+def collect_skills_health(ctx: Ctx) -> SkillsHealthReport:
+    report = SkillsHealthReport(discovered=discover_skills(ctx))
+
+    for skill in report.discovered:
+        if skill.errors:
+            report.invalid.append(skill)
+            continue
+        if skill.warnings:
+            report.warnings.append(skill)
+
+        dest = ctx.user_skills_root / skill.dir_name
+        if dest.is_symlink():
+            if not dest.exists():
+                try:
+                    report.broken.append((skill, dest, dest.readlink()))
+                except OSError:
+                    report.broken.append((skill, dest, "???"))
+                continue
+
+            if symlink_points_to(dest, skill.path):
+                report.healthy.append((skill, dest))
+            else:
+                try:
+                    report.mismatch.append((skill, dest, dest.readlink()))
+                except OSError:
+                    report.mismatch.append((skill, dest, "???"))
+            continue
+
+        if dest.exists():
+            report.conflict.append((skill, dest))
+        else:
+            report.missing.append((skill, dest))
+
+    return report
+
+
+def print_skills_health(report: SkillsHealthReport, ctx: Ctx) -> None:
+    print("Agent Skills health:")
+    print(f"\nRepo skills root: {ctx.fmt(ctx.skills_root)}")
+    print(f"User skills root: {ctx.fmt(ctx.user_skills_root)}")
+
+    if not report.discovered:
+        print("\nNo skills found under the repo skills root.")
+        return
+
+    print(f"\nDiscovered skills ({len(report.discovered)}):")
+    for skill in report.discovered:
+        display_name = skill.name or skill.dir_name
+        print(f"  - {display_name}: {ctx.fmt(skill.path)}")
+
+    if report.invalid:
+        print(f"\n❌ Invalid ({len(report.invalid)}):")
+        for skill in report.invalid:
+            display_name = skill.name or skill.dir_name
+            joined = "; ".join(skill.errors)
+            print(f"  {display_name}: {ctx.fmt(skill.manifest_path)} ({joined})")
+
+    if report.warnings:
+        print(f"\n⚠️  Warnings ({len(report.warnings)}):")
+        for skill in report.warnings:
+            display_name = skill.name or skill.dir_name
+            joined = "; ".join(skill.warnings)
+            print(f"  {display_name}: {ctx.fmt(skill.manifest_path)} ({joined})")
+
+    if report.healthy:
+        print(f"\n✅ Linked ({len(report.healthy)}):")
+        for skill, dest in report.healthy:
+            display_name = skill.name or skill.dir_name
+            print(f"  {display_name}: {ctx.fmt(dest)}")
+
+    if report.broken:
+        print(f"\n❌ Broken ({len(report.broken)}):")
+        for skill, dest, link_target in report.broken:
+            display_name = skill.name or skill.dir_name
+            print(f"  {display_name}: {ctx.fmt(dest)} -> {link_target}")
+
+    if report.mismatch:
+        print(f"\n⚠️  Mismatch ({len(report.mismatch)}):")
+        for skill, dest, link_target in report.mismatch:
+            display_name = skill.name or skill.dir_name
+            print(f"  {display_name}: {ctx.fmt(dest)} -> {link_target}")
+
+    if report.conflict:
+        print(f"\n⛔ Conflict ({len(report.conflict)}):")
+        for skill, dest in report.conflict:
+            display_name = skill.name or skill.dir_name
+            print(f"  {display_name}: {ctx.fmt(dest)} (exists but is not a symlink)")
+
+    if report.missing:
+        print(f"\n⚪ Missing ({len(report.missing)}):")
+        for skill, dest in report.missing:
+            display_name = skill.name or skill.dir_name
+            print(f"  {display_name}: {ctx.fmt(dest)}")
+
+    if not (
+        report.invalid
+        or report.broken
+        or report.mismatch
+        or report.conflict
+        or report.missing
+    ):
+        print("\nAll discovered skills are valid and linked.")
+
+
+def skills_list() -> int:
+    ctx = get_ctx()
+    skills = discover_skills(ctx)
+
+    print(f"Repo skills root: {ctx.fmt(ctx.skills_root)}")
+    print(f"User skills root: {ctx.fmt(ctx.user_skills_root)}\n")
+
+    if not skills:
+        print("No skills discovered.")
+        print("Add skills as <REPO>/skills/<skill-name>/SKILL.md.")
+        return 0
+
+    print(f"Discovered skills ({len(skills)}):")
+    for skill in skills:
+        display_name = skill.name or skill.dir_name
+        status = "valid" if not skill.errors else "invalid"
+        print(f"- {display_name}: {ctx.fmt(skill.path)} ({status})")
+
+    return 0
+
+
+def skills_health(strict: bool = False) -> int:
+    ctx = get_ctx()
+    report = collect_skills_health(ctx)
+    print_skills_health(report, ctx)
+
+    if not strict:
+        return 0
+
+    if report.invalid or report.broken or report.mismatch or report.conflict or report.missing:
+        return 1
+    return 0
+
+
+def skills_link(replace_symlinks: bool) -> int:
+    ctx = get_ctx()
+    report = collect_skills_health(ctx)
+
+    print(f"Linking skills from {ctx.fmt(ctx.skills_root)} to {ctx.fmt(ctx.user_skills_root)}")
+
+    if report.invalid:
+        print("\nInvalid skills detected:")
+        for skill in report.invalid:
+            display_name = skill.name or skill.dir_name
+            joined = "; ".join(skill.errors)
+            print(f"- {display_name}: {ctx.fmt(skill.manifest_path)} ({joined})")
+
+    valid_skills = [skill for skill in report.discovered if not skill.errors]
+    if not valid_skills:
+        if report.invalid:
+            print("\n❌ No valid skills to link.")
+            return 1
+        ctx.user_skills_root.mkdir(parents=True, exist_ok=True)
+        print("\nInfo: no skills discovered; created user skills root if needed.")
+        return 0
+
+    ok = not report.invalid
+    for skill in valid_skills:
+        print(f"\n[{skill.name or skill.dir_name}]")
+        dest = ctx.user_skills_root / skill.dir_name
+        if not ensure_symlink(skill.path, dest, ctx, replace_symlinks=replace_symlinks):
+            ok = False
+
+    if not ok:
+        print("\n❌ Skill link completed with errors. Resolve conflicts and re-run.")
+        return 1
+
+    print("\n✅ Skill link completed.")
     return 0
 
 
@@ -740,7 +1092,7 @@ def pi_extensions_uninstall(scope: str, package_names: Optional[list[str]], dry_
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="AGENTS.md / pi-extensions setup helper")
+    parser = argparse.ArgumentParser(description="AGENTS.md / Agent Skills / pi-extensions setup helper")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     link_parser = subparsers.add_parser("link", help="Create AGENTS.md symlinks")
@@ -752,6 +1104,25 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser("health", help="Check AGENTS.md link health")
     subparsers.add_parser("list", help="List configured AGENTS.md targets")
+
+    skills_parser = subparsers.add_parser("skills", help="Manage repo Agent Skills")
+    skills_subparsers = skills_parser.add_subparsers(dest="skills_command", required=True)
+
+    skills_subparsers.add_parser("list", help="List discovered repo skills")
+
+    skills_health_parser = skills_subparsers.add_parser("health", help="Check Agent Skills health")
+    skills_health_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero if discovered skills are invalid or not linked",
+    )
+
+    skills_link_parser = skills_subparsers.add_parser("link", help="Link repo skills into ~/.agents/skills")
+    skills_link_parser.add_argument(
+        "--replace-symlinks",
+        action="store_true",
+        help="Replace symlinks that point somewhere else",
+    )
 
     extensions_parser = subparsers.add_parser("extensions", help="Manage local pi extension packages")
     extensions_subparsers = extensions_parser.add_subparsers(dest="extensions_command", required=True)
@@ -822,6 +1193,15 @@ def main(argv: Optional[list[str]] = None) -> int:
         return health()
     if args.command == "list":
         return list_targets()
+    if args.command == "skills":
+        if args.skills_command == "list":
+            return skills_list()
+        if args.skills_command == "health":
+            return skills_health(strict=args.strict)
+        if args.skills_command == "link":
+            return skills_link(replace_symlinks=args.replace_symlinks)
+        parser.error(f"Unknown skills command: {args.skills_command}")
+        return 1
     if args.command == "extensions":
         if args.extensions_command == "health":
             return pi_extensions_health(scope=args.scope, strict=args.strict)

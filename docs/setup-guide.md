@@ -2,6 +2,12 @@
 
 This guide covers operational commands for this repository.
 
+The repo supports three setup flows:
+
+- `global/AGENTS.md` symlink management
+- Agent Skills storage under `skills/` plus symlinks into `~/.agents/skills/`
+- local `pi` extension package management
+
 For package feature details, see:
 
 - [`../pi-extensions/README.md`](../pi-extensions/README.md)
@@ -32,7 +38,38 @@ python3 setup.py health
 
 ---
 
-## 2) pi extension package management
+## 2) Agent Skills management
+
+Store each skill as `skills/<skill-name>/SKILL.md` following the Agent Skills spec.
+
+The repo-level source of truth is:
+
+- `skills/*/SKILL.md`
+
+These commands discover skills, validate the required frontmatter fields used by the spec (`name`, `description`, optional `compatibility` length), and link each valid skill directory into:
+
+- `~/.agents/skills/<skill-name>`
+
+### Commands
+
+```bash
+python3 setup.py skills list
+python3 setup.py skills health
+python3 setup.py skills health --strict
+python3 setup.py skills link
+python3 setup.py skills link --replace-symlinks
+```
+
+### Notes
+
+- `skills link` is safe by default and will not replace existing regular files.
+- `skills link --replace-symlinks` only replaces stale symlinks.
+- Only directories directly under `skills/` that contain `SKILL.md` are treated as skills.
+- For full external validation, you can also run `skills-ref validate ./skills/<skill-name>`.
+
+---
+
+## 3) pi extension package management
 
 The repo discovers installable pi packages from:
 
@@ -82,7 +119,7 @@ python3 setup.py extensions uninstall --scope local --package pi-ghostty --dry-r
 
 ---
 
-## 3) mise task shortcuts
+## 4) mise task shortcuts
 
 Equivalent shortcuts in `mise.toml`:
 
@@ -92,6 +129,12 @@ mise run list
 mise run link
 mise run link-replace
 mise run health
+
+# Agent Skills tasks
+mise run skills-list
+mise run skills-health
+mise run skills-link
+mise run skills-link-replace
 
 # pi extension tasks
 mise run pi-extensions-health
