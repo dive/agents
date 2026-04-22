@@ -66,7 +66,7 @@ DIRECT_LINK_TARGETS: list[LinkTarget] = [
     LinkTarget("Codex CLI", ".codex/AGENTS.md"),
     LinkTarget("Claude Code", ".claude/CLAUDE.md"),
     LinkTarget("OpenCode", ".config/opencode/AGENTS.md"),
-    LinkTarget("Pi (pi-mono)", ".pi/agent/AGENTS.md"),
+    LinkTarget("Pi (pi-mono)", ".pi/agent/APPEND_SYSTEM.md"),
     # LinkTarget("Universal ~/.config fallback", ".config/AGENTS.md"),
 ]
 
