@@ -60,7 +60,7 @@ class PromptTemplate:
 # - Codex: https://developers.openai.com/codex/guides/agents-md.md
 # - Claude: https://code.claude.com/docs/en/memory.md
 # - OpenCode: https://opencode.ai/docs/rules.md
-# - Pi: npm readme / docs
+# - Pi: https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/README.md#system-prompt
 # - Amp: https://ampcode.com/manual/AGENTS.md.md
 DIRECT_LINK_TARGETS: list[LinkTarget] = [
     LinkTarget("Codex CLI", ".codex/AGENTS.md"),
