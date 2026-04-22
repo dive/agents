@@ -67,13 +67,14 @@ DIRECT_LINK_TARGETS: list[LinkTarget] = [
     LinkTarget("Claude Code", ".claude/CLAUDE.md"),
     LinkTarget("OpenCode", ".config/opencode/AGENTS.md"),
     LinkTarget("Pi (pi-mono)", ".pi/agent/APPEND_SYSTEM.md"),
+    LinkTarget("Amp", ".config/amp/AGENTS.md"),
     # LinkTarget("Universal ~/.config fallback", ".config/AGENTS.md"),
 ]
 
 # Tools that can consume ~/.config/AGENTS.md directly.
 # We avoid creating dedicated per-tool links for these.
 GLOBAL_FALLBACK_TOOLS: list[GlobalFallbackTool] = [
-    GlobalFallbackTool("Amp", ".config/amp/AGENTS.md"),
+    # GlobalFallbackTool("Amp", ".config/amp/AGENTS.md"),
 ]
 
 
