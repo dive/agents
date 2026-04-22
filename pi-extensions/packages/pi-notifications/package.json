@@ -12,9 +12,6 @@
   "peerDependencies": {
     "@mariozechner/pi-coding-agent": "*"
   },
-  "dependencies": {
-    "pi-terminal-osc": "0.1.0"
-  },
   "pi": {
     "extensions": ["./index.ts"]
   }

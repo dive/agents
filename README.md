@@ -22,6 +22,8 @@ More details: [`pi-extensions/README.md`](pi-extensions/README.md)
 
 ## Install from a local clone
 
+Each package is self-contained, so these installs work directly from a local clone without running `npm install` in the monorepo first.
+
 ```bash
 REPO_DIR=/path/to/agents
 

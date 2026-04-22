@@ -38,6 +38,8 @@ Extension entrypoints:
 
 ## Install per extension
 
+Each package is self-contained, so these installs work directly from a local clone without running `npm install` in the monorepo first.
+
 ```bash
 REPO_DIR=/path/to/agents
 
