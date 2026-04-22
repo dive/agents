@@ -60,6 +60,7 @@ Verify your work before reporting it as done.
 - **NEVER** use destructive commands like `git reset --hard` or `git checkout --` unless specifically requested or approved by the user. **ALWAYS** prefer using non-interactive versions of commands.
 - If you notice unexpected changes in the worktree or staging area that you did not make, do not revert or disturb them. If they intersect files or behavior you need to touch, account for them and report conflicts instead of overwriting them. NEVER revert, undo, or modify changes you did not make unless the user explicitly asks you to.
 - Assume the user or other agents may edit nearby files concurrently. Re-read a file before writing if the area may have changed since you last read it. If the same area changed underneath you, report the conflict instead of overwriting.
+- Check the `git log` for commit summaries convention before commiting, prefer conventional commits if the style is unclear
 
 ## Engineering Principles
 
