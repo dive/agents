@@ -67,7 +67,7 @@ DIRECT_LINK_TARGETS: list[LinkTarget] = [
     LinkTarget("Claude Code", ".claude/CLAUDE.md"),
     LinkTarget("OpenCode", ".config/opencode/AGENTS.md"),
     LinkTarget("Pi (pi-mono)", ".pi/agent/AGENTS.md"),
-    LinkTarget("Universal ~/.config fallback", ".config/AGENTS.md"),
+    # LinkTarget("Universal ~/.config fallback", ".config/AGENTS.md"),
 ]
 
 # Tools that can consume ~/.config/AGENTS.md directly.
