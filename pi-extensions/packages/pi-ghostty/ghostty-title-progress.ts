@@ -3,18 +3,14 @@ import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-age
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { createOscWriter, isGhosttyTerminal } from "./terminal-osc";
+import { isGhosttyTerminal } from "./terminal-osc";
 
 const BRAILLE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const SPINNER_INTERVAL_MS = 80;
-const PROGRESS_KEEPALIVE_MS = 1_000;
-const COMPLETION_FLASH_MS = 800;
 const RESULT_FLASH_MS = 900;
 const GIT_REFRESH_INTERVAL_MS = 5_000;
 
 const execFileAsync = promisify(execFile);
-
-type ProgressState = 0 | 1 | 2 | 3 | 4;
 
 function getLastMapKey<K, V>(map: Map<K, V>): K | undefined {
   let key: K | undefined;
@@ -24,14 +20,11 @@ function getLastMapKey<K, V>(map: Map<K, V>): K | undefined {
 
 export default function (pi: ExtensionAPI) {
   const ghosttyEnabled = isGhosttyTerminal();
-  const osc = createOscWriter();
 
   let currentModel: string | undefined;
   let currentCwd: string = process.cwd();
 
   let spinnerTimer: ReturnType<typeof setInterval> | undefined;
-  let progressKeepaliveTimer: ReturnType<typeof setInterval> | undefined;
-  let completionTimer: ReturnType<typeof setTimeout> | undefined;
   let resultFlashTimer: ReturnType<typeof setTimeout> | undefined;
 
   let frameIndex = 0;
@@ -44,28 +37,10 @@ export default function (pi: ExtensionAPI) {
   const activeTools = new Map<string, string>();
   let activeToolCallId: string | undefined;
 
-  function setGhosttyProgress(state: ProgressState, value?: number) {
-    if (!ghosttyEnabled) return;
-    const payload = value === undefined ? `9;4;${state}` : `9;4;${state};${value}`;
-    osc.writeOsc(payload, "st");
-  }
-
   function clearSpinnerTimer() {
     if (!spinnerTimer) return;
     clearInterval(spinnerTimer);
     spinnerTimer = undefined;
-  }
-
-  function clearProgressKeepaliveTimer() {
-    if (!progressKeepaliveTimer) return;
-    clearInterval(progressKeepaliveTimer);
-    progressKeepaliveTimer = undefined;
-  }
-
-  function clearCompletionTimer() {
-    if (!completionTimer) return;
-    clearTimeout(completionTimer);
-    completionTimer = undefined;
   }
 
   function clearResultFlashTimer() {
@@ -166,9 +141,7 @@ export default function (pi: ExtensionAPI) {
   }
 
   function startWorking(ctx: ExtensionContext) {
-    clearCompletionTimer();
     clearSpinnerTimer();
-    clearProgressKeepaliveTimer();
     clearResultFlashTimer();
 
     isWorking = true;
@@ -180,21 +153,12 @@ export default function (pi: ExtensionAPI) {
       renderWorkingTitle(ctx);
     }, SPINNER_INTERVAL_MS);
     spinnerTimer.unref?.();
-
-    // Ghostty resets stale progress after ~15s. Keep alive while working.
-    setGhosttyProgress(3);
-    progressKeepaliveTimer = setInterval(() => {
-      setGhosttyProgress(3);
-    }, PROGRESS_KEEPALIVE_MS);
-    progressKeepaliveTimer.unref?.();
   }
 
   function stopWorking(ctx: ExtensionContext) {
     isWorking = false;
 
     clearSpinnerTimer();
-    clearProgressKeepaliveTimer();
-    clearCompletionTimer();
     clearResultFlashTimer();
 
     activeTools.clear();
@@ -209,13 +173,6 @@ export default function (pi: ExtensionAPI) {
       resultFlashTimer = undefined;
     }, RESULT_FLASH_MS);
     resultFlashTimer.unref?.();
-
-    setGhosttyProgress(1, 100);
-    completionTimer = setTimeout(() => {
-      setGhosttyProgress(0);
-      completionTimer = undefined;
-    }, COMPLETION_FLASH_MS);
-    completionTimer.unref?.();
   }
 
   function resetAll(ctx?: ExtensionContext) {
@@ -224,8 +181,6 @@ export default function (pi: ExtensionAPI) {
     gitLabel = undefined;
 
     clearSpinnerTimer();
-    clearProgressKeepaliveTimer();
-    clearCompletionTimer();
     clearResultFlashTimer();
     clearGitRefreshTimer();
 
@@ -233,9 +188,6 @@ export default function (pi: ExtensionAPI) {
     activeToolCallId = undefined;
 
     if (ctx?.hasUI) setIdleTitle(ctx);
-
-    setGhosttyProgress(0);
-    osc.close();
   }
 
   pi.on("session_start", async (_event, ctx) => {

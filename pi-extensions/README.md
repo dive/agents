@@ -16,7 +16,7 @@ Extension entrypoints:
   - model + thinking level in title (`model (low|medium|high|...)`)
   - git branch marker with dirty state (`branch*`)
   - short result flash in title (`✓` / `✗`)
-  - Ghostty progress integration
+  - relies on pi's built-in terminal progress support
 - [`ghostty-theme-sync.ts`](packages/pi-ghostty/ghostty-theme-sync.ts)
   - OSC 11 background query parsing
   - auto switch between light/dark pi themes in Ghostty
