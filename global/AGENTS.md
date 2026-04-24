@@ -40,7 +40,7 @@ Pause and wait for approval only when:
 - the work changes external APIs, database/schema, auth/security, or adds dependencies
 - the work spans multiple subsystems and there is a real design choice to make
 
-If the path is straightforward, present a short plan and wait. If there are meaningful tradeoffs, present 2-3 options with a recommendation and wait.
+When approval is required and the path is straightforward, present a short plan and wait. When approval is required and there are meaningful tradeoffs, present 2-3 options with a recommendation and wait.
 
 Persist until the task is fully handled end-to-end: carry changes through implementation, verification, and a clear explanation of outcomes. Do not stop at analysis or partial fixes unless the user explicitly pauses or redirects you.
 
