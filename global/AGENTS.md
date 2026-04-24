@@ -1,4 +1,4 @@
-# AGENTS.md
+# Global Agent Instructions
 
 ## Scope & Precedence
 
