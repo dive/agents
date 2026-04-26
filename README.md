@@ -1,42 +1,18 @@
 # agents
 
-Utilities and extension packages for coding agents (focused on [`pi`](https://github.com/badlogic/pi-mono) + Ghostty).
+Utilities, shared instructions, skills, prompts, and local extension packages for coding agents, focused on [`pi`](https://github.com/badlogic/pi-mono) and Ghostty.
 
-## What is in this repo
+## Repository Map
 
-- [`global/AGENTS.md`](global/AGENTS.md) — shared instructions used across coding tools
-- [`skills/`](skills/) — repo-managed Agent Skills, linked into `~/.agents/skills/`
-- [`destroot/pi/agent/prompts/`](destroot/pi/agent/prompts/) — repo-managed pi prompt templates, linked into `~/.pi/agent/prompts/`
-- [`setup.py`](setup.py) — helper for AGENTS.md links, Agent Skills links, pi prompt template links, and `pi` package operations
-- [`pi-extensions/`](pi-extensions/) — installable `pi` extension packages
-
-## pi extension packages
-
-| Package | What it adds | Commands |
-| --- | --- | --- |
-| [`pi-ghostty`](pi-extensions/packages/pi-ghostty/) | Terminal title/status UX for Ghostty (spinner, tool name, result flash, git branch marker, model + thinking level) and OSC 11 light/dark theme sync. | `/ghostty-sync` |
-| [`pi-notifications`](pi-extensions/packages/pi-notifications/) | Ghostty desktop notifications after each completed agent run, including duration and error/success status. | *(no commands)* |
-| [`pi-session-export-html`](pi-extensions/packages/pi-session-export-html/) | Uses built-in `pi --export` to export the current session to `/tmp/*.html` and opens it in the default browser. | `/open-export` |
-
-More details: [`pi-extensions/README.md`](pi-extensions/README.md)
-
-## Install from a local clone
-
-Each package is self-contained, so these installs work directly from a local clone without running `npm install` in the monorepo first.
-
-```bash
-REPO_DIR=/path/to/agents
-
-# Global install
-pi install "$REPO_DIR/pi-extensions/packages/pi-ghostty"
-pi install "$REPO_DIR/pi-extensions/packages/pi-notifications"
-pi install "$REPO_DIR/pi-extensions/packages/pi-session-export-html"
-
-# Project-local install
-pi install -l "$REPO_DIR/pi-extensions/packages/pi-ghostty"
-pi install -l "$REPO_DIR/pi-extensions/packages/pi-notifications"
-pi install -l "$REPO_DIR/pi-extensions/packages/pi-session-export-html"
-```
+| Path | Purpose |
+| --- | --- |
+| [`AGENTS.md`](AGENTS.md) | Contributor guide for working in this repository. |
+| [`destroot/pi/agent/prompts/`](destroot/pi/agent/prompts/) | Repo-managed pi prompt templates, linked into `~/.pi/agent/prompts/`. |
+| [`docs/`](docs/) | Setup and operational documentation. |
+| [`global/AGENTS.md`](global/AGENTS.md) | Shared global agent instructions linked into tool-specific locations. |
+| [`pi-extensions/`](pi-extensions/) | Independently installable pi extension packages. |
+| [`setup.py`](setup.py) | Helper for links, health checks, prompt templates, skills, and pi extension operations. |
+| [`skills/`](skills/) | Repo-managed Agent Skills, linked into `~/.agents/skills/`. |
 
 ## Agent Skills
 
@@ -44,21 +20,58 @@ pi install -l "$REPO_DIR/pi-extensions/packages/pi-session-export-html"
 | --- | --- | --- |
 | [`obsidian-cli`](skills/obsidian-cli/) | Obsidian vault workflows using the local `obsidian` CLI when its index/app state helps, and direct Markdown edits when plain file tools are better. | Notes, vaults, daily notes, tasks, links, tags, properties, bases, bookmarks, plugins, themes, sync, workspace state, or the `obsidian` command. |
 
-- Store each skill under `skills/<skill-name>/SKILL.md`
-- Link repo skills into `~/.agents/skills/` with `python3 setup.py skills link`
-- Inspect discovery, validation, and link state with `python3 setup.py skills health`
+Store skills as `skills/<skill-name>/SKILL.md`. Skill names must match their directory names.
 
 ## Pi Prompt Templates
 
-- Store each template under `destroot/pi/agent/prompts/<name>.md`
-- Link repo templates into `~/.pi/agent/prompts/` with `python3 setup.py prompts link`
-- Inspect discovery and link state with `python3 setup.py prompts health`
+| Prompt | What it does | Usage |
+| --- | --- | --- |
+| [`review`](destroot/pi/agent/prompts/review.md) | Reviews a GitHub PR or local working tree changes with a structured senior-engineer review. | `/review [PR-URL\|PR-NUMBER]` |
 
-## Setup and operations
+Store prompt templates as direct Markdown files under `destroot/pi/agent/prompts/`.
 
-- Setup guide: [`docs/setup-guide.md`](docs/setup-guide.md)
-- Includes AGENTS.md, Agent Skills, pi prompt templates, and `pi` package CLI commands plus `mise` task shortcuts
+## Pi Extension Packages
 
-## License
+| Package | What it adds | Commands |
+| --- | --- | --- |
+| [`pi-ghostty`](pi-extensions/packages/pi-ghostty/) | Ghostty terminal title/status UX and OSC 11 light/dark theme sync. | `/ghostty-sync` |
+| [`pi-notifications`](pi-extensions/packages/pi-notifications/) | Ghostty desktop notifications after each completed agent run, including duration and result status. | *(no commands)* |
+| [`pi-session-export-html`](pi-extensions/packages/pi-session-export-html/) | Exports the current pi session to `/tmp/*.html` and opens it in the default browser. | `/open-export` |
 
-MIT — see [`LICENSE`](LICENSE).
+Each package is self-contained and can be installed directly from a local clone. More detail is in [`pi-extensions/README.md`](pi-extensions/README.md).
+
+## Common Operations
+
+```bash
+# Inspect available items
+python3 setup.py list
+python3 setup.py skills list
+python3 setup.py prompts list
+
+# Link repo-managed files into user-level locations
+python3 setup.py link
+python3 setup.py skills link
+python3 setup.py prompts link
+
+# Check link and install health
+python3 setup.py health
+python3 setup.py skills health
+python3 setup.py prompts health
+python3 setup.py extensions health --scope both
+
+# Install all pi extension packages
+python3 setup.py extensions install --scope global
+python3 setup.py extensions install --scope local
+```
+
+Equivalent shortcuts are available in [`mise.toml`](mise.toml), for example `mise run skills-health`.
+
+To install one pi extension package manually:
+
+```bash
+REPO_DIR=/path/to/agents
+pi install "$REPO_DIR/pi-extensions/packages/pi-ghostty"
+pi install -l "$REPO_DIR/pi-extensions/packages/pi-ghostty"
+```
+
+For detailed setup flows and task shortcuts, see [`docs/setup-guide.md`](docs/setup-guide.md).
