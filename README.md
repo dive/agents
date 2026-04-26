@@ -40,6 +40,10 @@ pi install -l "$REPO_DIR/pi-extensions/packages/pi-session-export-html"
 
 ## Agent Skills
 
+| Skill | What it adds | When to use |
+| --- | --- | --- |
+| [`obsidian-cli`](skills/obsidian-cli/) | Obsidian vault workflows using the local `obsidian` CLI when its index/app state helps, and direct Markdown edits when plain file tools are better. | Notes, vaults, daily notes, tasks, links, tags, properties, bases, bookmarks, plugins, themes, sync, workspace state, or the `obsidian` command. |
+
 - Store each skill under `skills/<skill-name>/SKILL.md`
 - Link repo skills into `~/.agents/skills/` with `python3 setup.py skills link`
 - Inspect discovery, validation, and link state with `python3 setup.py skills health`

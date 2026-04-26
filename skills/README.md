@@ -1,5 +1,7 @@
 # Agent Skills
 
+[Agent Skills Specification](https://agentskills.io/specification.md)
+
 Store repo-managed skills here as one directory per skill:
 
 ```text
