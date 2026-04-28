@@ -1,7 +1,7 @@
 {
   "name": "pi-ghostty",
   "version": "0.1.0",
-  "description": "Ghostty-focused pi extensions for title progress and automatic light/dark theme sync.",
+  "description": "Ghostty-focused pi extensions for title progress, automatic light/dark theme sync, and response opening.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -13,6 +13,10 @@
     "@mariozechner/pi-coding-agent": "*"
   },
   "pi": {
-    "extensions": ["./ghostty-title-progress.ts", "./ghostty-theme-sync.ts"]
+    "extensions": [
+      "./ghostty-title-progress.ts",
+      "./ghostty-theme-sync.ts",
+      "./ghostty-open-response.ts"
+    ]
   }
 }

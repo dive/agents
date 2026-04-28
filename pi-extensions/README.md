@@ -21,6 +21,11 @@ Extension entrypoints:
   - OSC 11 background query parsing
   - auto switch between light/dark pi themes in Ghostty
   - slash command: `/ghostty-sync`
+- [`ghostty-open-response.ts`](packages/pi-ghostty/ghostty-open-response.ts)
+  - writes the latest assistant response Markdown unchanged to `/tmp`
+  - opens it with `$EDITOR` in a new Ghostty window via Ghostty's macOS scripting dictionary
+  - slash command: `/open-response`
+  - shortcut: `alt+o`
 
 ### [`pi-notifications`](packages/pi-notifications/)
 
@@ -80,9 +85,10 @@ Fallback environment variables:
 ## Commands
 
 - `/ghostty-sync` — force a manual Ghostty OSC 11 theme sync
+- `/open-response` — open the latest assistant response Markdown with `$EDITOR` in a new Ghostty window
 - `/open-export` — export current session to `/tmp/*.html` and open it
 
-`pi-notifications` has no slash commands.
+`pi-notifications` has no slash commands. `pi-ghostty` also registers `alt+o` for `/open-response`.
 
 ## Related docs
 
