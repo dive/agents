@@ -2,30 +2,14 @@ import { mkdir, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import type { ExtensionAPI, ExtensionContext, SessionEntry, SessionMessageEntry } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext, SessionMessageEntry } from "@mariozechner/pi-coding-agent";
 
 const OUTPUT_DIR = path.join(os.tmpdir(), "pi-ghostty-responses");
 
-type AssistantContentBlock = {
-  type: string;
-  text?: string;
-};
+function getAssistantText(entry: SessionMessageEntry): string {
+  if (entry.message.role !== "assistant") return "";
 
-type AssistantTextMessageEntry = SessionMessageEntry & {
-  message: {
-    role: "assistant";
-    content: AssistantContentBlock[];
-  };
-};
-
-function isAssistantTextMessageEntry(entry: SessionEntry): entry is AssistantTextMessageEntry {
-  return entry.type === "message" && entry.message.role === "assistant" && Array.isArray(entry.message.content);
-}
-
-function getAssistantText(entry: AssistantTextMessageEntry): string {
-  return entry.message.content
-    .map((block) => (block.type === "text" ? (block.text ?? "") : ""))
-    .join("");
+  return entry.message.content.map((block) => (block.type === "text" ? block.text : "")).join("");
 }
 
 function getLatestAssistantText(ctx: ExtensionContext): string | undefined {
@@ -33,10 +17,10 @@ function getLatestAssistantText(ctx: ExtensionContext): string | undefined {
 
   for (let i = branch.length - 1; i >= 0; i -= 1) {
     const entry = branch[i];
-    if (!isAssistantTextMessageEntry(entry)) continue;
+    if (entry.type !== "message") continue;
 
-    const markdown = getAssistantText(entry);
-    if (markdown.trim().length > 0) return markdown;
+    const text = getAssistantText(entry);
+    if (text.trim().length > 0) return text;
   }
 
   return undefined;
@@ -50,19 +34,19 @@ function appleScriptQuote(value: string): string {
   return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 
-async function writeMarkdown(markdown: string): Promise<string> {
+async function writeMarkdown(text: string): Promise<string> {
   await mkdir(OUTPUT_DIR, { recursive: true });
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const outputPath = path.join(OUTPUT_DIR, `latest-response-${timestamp}.md`);
-  await writeFile(outputPath, markdown, "utf8");
-  return outputPath;
+  const filePath = path.join(OUTPUT_DIR, `latest-response-${timestamp}.md`);
+  await writeFile(filePath, text, "utf8");
+  return filePath;
 }
 
-async function openInGhostty(pi: ExtensionAPI, ctx: ExtensionContext, markdownPath: string): Promise<void> {
+async function openInGhostty(pi: ExtensionAPI, ctx: ExtensionContext, filePath: string): Promise<void> {
   const shellPath = process.env.SHELL || "/bin/zsh";
   const editorScript = 'if [ -z "$EDITOR" ]; then echo "open-response: EDITOR is not set"; exit 1; fi; eval "exec $EDITOR \\\"\\$1\\\""';
-  const command = `${shellQuote(shellPath)} -lc ${shellQuote(editorScript)} open-response ${shellQuote(markdownPath)}`;
+  const command = `${shellQuote(shellPath)} -lc ${shellQuote(editorScript)} open-response ${shellQuote(filePath)}`;
   const environment = process.env.EDITOR ? `, environment variables:{${appleScriptQuote(`EDITOR=${process.env.EDITOR}`)}}` : "";
   const script = [
     'tell application "Ghostty"',
@@ -93,15 +77,15 @@ async function openLatestResponse(pi: ExtensionAPI, ctx: ExtensionContext): Prom
     return;
   }
 
-  const markdown = getLatestAssistantText(ctx);
-  if (!markdown) {
+  const text = getLatestAssistantText(ctx);
+  if (!text) {
     if (ctx.hasUI) ctx.ui.notify("open-response: no assistant response found", "warning");
     return;
   }
 
-  let markdownPath: string;
+  let filePath: string;
   try {
-    markdownPath = await writeMarkdown(markdown);
+    filePath = await writeMarkdown(text);
   } catch (error) {
     const reason = error instanceof Error ? error.message : "unknown file write error";
     if (ctx.hasUI) ctx.ui.notify(`open-response: failed to write Markdown (${reason})`, "error");
@@ -109,14 +93,13 @@ async function openLatestResponse(pi: ExtensionAPI, ctx: ExtensionContext): Prom
   }
 
   try {
-    await openInGhostty(pi, ctx, markdownPath);
+    await openInGhostty(pi, ctx, filePath);
   } catch (error) {
     const reason = error instanceof Error ? error.message : "unknown AppleScript error";
     if (ctx.hasUI) ctx.ui.notify(`open-response: failed to open Ghostty (${reason})`, "error");
     return;
   }
 
-  if (ctx.hasUI) ctx.ui.notify(`open-response: opened ${markdownPath}`, "info");
 }
 
 export default function (pi: ExtensionAPI) {
