@@ -59,3 +59,6 @@ pnpm-debug.log*
 .pi/npm/
 .pi/extensions/
 .pi/*.log
+
+# amp
+.amp/
