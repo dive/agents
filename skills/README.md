@@ -18,6 +18,14 @@ Requirements from the Agent Skills spec:
 - `name` is required, must match the directory name, and should use lowercase letters, numbers, and hyphens
 - `description` is required and should say what the skill does and when to use it
 
+Import updateable external skills from GitHub with `gh skill`:
+
+```bash
+gh skill install OWNER/REPO SKILL_OR_PATH --dir skills --force
+gh skill update --dir skills --dry-run
+gh skill update --dir skills --all
+```
+
 Link repo skills into the user-level interoperability path:
 
 ```bash

@@ -23,32 +23,31 @@ Utilities, shared instructions, skills, prompts, and local extension packages fo
 
 Store skills as `skills/<skill-name>/SKILL.md`. Skill names must match their directory names.
 
-### Importing Skills With `npx skills`
+### Importing Skills With `gh skill`
 
-Use this repo's `skills/` directory as the source of truth for imported third-party skills. Install them into this repo with the `openclaw` project target because that target writes to the plain `./skills/<skill-name>/` layout used here.
-
-Always import skills from a GitHub source (`OWNER/REPO` or `OWNER/REPO/SUBPATH`) so `npx skills update -p -y` can track `skillPath` and update them later.
+Use this repo's `skills/` directory as the source of truth for imported third-party skills. Always import updateable external skills from GitHub so `gh skill update` can track the source metadata embedded in `SKILL.md`.
 
 ```bash
-# Preview skills available from a GitHub source.
-npx skills add OWNER/REPO[/SUBPATH] --list
+# Search or preview GitHub-hosted skills.
+gh skill search QUERY
+gh skill preview OWNER/REPO SKILL_OR_PATH
 
-# Import one skill into ./skills/<skill-name>/ and record its source in skills-lock.json.
-npx skills add OWNER/REPO[/SUBPATH] --skill SKILL_NAME --agent openclaw -y
+# Import one skill into ./skills/<skill-name>/.
+gh skill install OWNER/REPO SKILL_OR_PATH --dir skills --force
 
-# Import every skill from a GitHub source into ./skills/ and record them in skills-lock.json.
-npx skills add OWNER/REPO[/SUBPATH] --skill '*' --agent openclaw -y
+# Example: import the Sentry CLI skill from its exact GitHub path.
+gh skill install getsentry/cli plugins/sentry-cli/skills/sentry-cli --dir skills --force
 ```
 
-Commit both the imported `skills/<skill-name>/` directory and `skills-lock.json`. Do not use `--all` in this repo: it means all skills for all agents and can create generated `.claude/`, `.codex/`, `.pi/`, and `.agents/` install directories.
+`gh skill install` uses the latest tagged release by default, then the default branch if no tag is available. Commit the imported `skills/<skill-name>/` directory; there is no separate lockfile.
 
 Keep imported skills current with:
 
 ```bash
-# Dry check in a temporary copy; exits non-zero if an automatic update would change files.
+# Dry check without changing files.
 mise run skills-updates-check
 
-# Apply automatic updates to ./skills/ from skills-lock.json, then validate.
+# Apply GitHub-sourced skill updates, then validate.
 mise run skills-update
 ```
 
@@ -85,7 +84,7 @@ python3 setup.py skills list
 python3 setup.py prompts list
 
 # Import/update third-party skills into this repo's ./skills source tree
-npx skills add OWNER/REPO[/SUBPATH] --skill SKILL_NAME --agent openclaw -y
+gh skill install OWNER/REPO SKILL_OR_PATH --dir skills --force
 mise run skills-updates-check
 mise run skills-update
 

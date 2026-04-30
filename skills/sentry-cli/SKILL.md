@@ -1,12 +1,17 @@
 ---
-name: sentry-cli
-version: 0.31.0-dev.0
 description: Guide for using the Sentry CLI to interact with Sentry from the command line. Use when the user asks about viewing issues, events, projects, organizations, making API calls, or authenticating with Sentry via CLI.
+metadata:
+    github-path: plugins/sentry-cli/skills/sentry-cli
+    github-ref: refs/tags/0.30.0
+    github-repo: https://github.com/getsentry/cli
+    github-tree-sha: 01a274683cd887791fb96cc46b0a9980c88e02da
+name: sentry-cli
 requires:
-  bins: ["sentry"]
-  auth: true
+    auth: true
+    bins:
+        - sentry
+version: 0.30.0
 ---
-
 # Sentry CLI Usage Guide
 
 Help users interact with Sentry from the command line using the `sentry` CLI.

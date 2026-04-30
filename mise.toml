@@ -31,42 +31,25 @@ description = "Link repo Agent Skills and replace stale symlinks"
 run = "python3 setup.py skills link --replace-symlinks"
 
 [tasks.skills-updates-check]
-description = "Preview npx skills project updates without changing this repo"
+description = "Preview gh skill updates for GitHub-sourced skills"
 run = """
-set -euo pipefail
-tmp="$(mktemp -d)"
-cleanup() { rm -rf "$tmp"; }
-trap cleanup EXIT
-mkdir -p "$tmp/repo"
-rsync -a --delete \
-  --exclude .git \
-  --exclude .rumdl_cache \
-  --exclude node_modules \
-  --exclude pi-extensions/node_modules \
-  ./ "$tmp/repo/"
-(
-  cd "$tmp/repo"
-  npx --yes skills update -p -y
-)
-status=0
-diff -ruN skills "$tmp/repo/skills" || status=$?
-left_lock="skills-lock.json"
-right_lock="$tmp/repo/skills-lock.json"
-if [ ! -e "$left_lock" ]; then left_lock="/dev/null"; fi
-if [ ! -e "$right_lock" ]; then right_lock="/dev/null"; fi
-diff -u "$left_lock" "$right_lock" || status=$?
-if [ "$status" -eq 0 ]; then
-  echo "No file changes from automatic skill update."
-else
-  echo "Run 'mise run skills-update' to apply these changes."
+skills="$(for f in skills/*/SKILL.md; do grep -q 'github-repo:' "$f" && basename "$(dirname "$f")"; done)"
+if [ -z "$skills" ]; then
+  echo "No GitHub-sourced skills found."
+  exit 0
 fi
-exit "$status"
+gh skill update --dir skills --dry-run $skills
 """
 
 [tasks.skills-update]
-description = "Update imported Agent Skills in ./skills from skills-lock.json"
+description = "Update GitHub-sourced Agent Skills in ./skills"
 run = """
-npx --yes skills update -p -y
+skills="$(for f in skills/*/SKILL.md; do grep -q 'github-repo:' "$f" && basename "$(dirname "$f")"; done)"
+if [ -z "$skills" ]; then
+  echo "No GitHub-sourced skills found."
+else
+  gh skill update --dir skills --all $skills
+fi
 python3 setup.py skills health --strict
 """
 

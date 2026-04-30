@@ -16,6 +16,7 @@ For package feature details, see:
 ## Prerequisites
 
 - Python 3 (`python3`)
+- GitHub CLI (`gh`) with `gh skill` support (for importing/updating external skills)
 - [`pi`](https://github.com/badlogic/pi-mono) CLI (for extension install/uninstall flows)
 - Optional: `mise` for task shortcuts
 
@@ -63,23 +64,27 @@ python3 setup.py skills link --replace-symlinks
 
 ### Importing and updating external skills
 
-Use `npx skills` to import external skills into this repo's `skills/` source tree. Use the `openclaw` project target because it writes to the plain `./skills/<skill-name>/` layout used here.
-
-Always import skills from a GitHub source (`OWNER/REPO` or `OWNER/REPO/SUBPATH`) so `npx skills update -p -y` can track `skillPath` and update them later.
+Use `gh skill` to import external skills into this repo's `skills/` source tree. Always import updateable external skills from GitHub so `gh skill update` can track the source metadata embedded in `SKILL.md`.
 
 ```bash
-# See what a GitHub source provides without installing it.
-npx skills add OWNER/REPO[/SUBPATH] --list
+# Search or preview GitHub-hosted skills.
+gh skill search QUERY
+gh skill preview OWNER/REPO SKILL_OR_PATH
 
-# Import one skill into ./skills/<skill-name>/ and update skills-lock.json.
-npx skills add OWNER/REPO[/SUBPATH] --skill SKILL_NAME --agent openclaw -y
+# Import one skill into ./skills/<skill-name>/.
+gh skill install OWNER/REPO SKILL_OR_PATH --dir skills --force
 
-# Check whether tracked project skills would update, using a temporary copy.
+# Example: import the Sentry CLI skill from its exact GitHub path.
+gh skill install getsentry/cli plugins/sentry-cli/skills/sentry-cli --dir skills --force
+
+# Check whether tracked GitHub skills would update.
 mise run skills-updates-check
 
-# Apply automatic tracked updates, then run strict health validation.
+# Apply GitHub-sourced updates, then run strict health validation.
 mise run skills-update
 ```
+
+`gh skill install` uses the latest tagged release by default, then the default branch if no tag is available. There is no separate lockfile.
 
 ### Notes
 
