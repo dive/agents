@@ -49,6 +49,16 @@ mise run skills-updates-check
 mise run skills-update
 ```
 
+Known edge case: `npx skills update` currently does not update non-GitHub/well-known sources reliably. For example, `sentry-cli` from `https://cli.sentry.dev` may be reported as “installed before skillPath tracking” and skipped. Until upstream support lands, refresh that kind of skill by reinstalling the source into this repo:
+
+```bash
+npx skills add https://cli.sentry.dev --agent openclaw -y
+python3 setup.py skills health --strict
+git diff -- skills/sentry-cli skills-lock.json
+```
+
+Do not use the suggested `npx skills add cli.sentry.dev -y` form for this edge case; without `https://`, the CLI treats it as a Git repository name. Track upstream support in [`vercel-labs/skills#386`](https://github.com/vercel-labs/skills/issues/386).
+
 After adding or updating skills, expose this repo's source copy to local agents with:
 
 ```bash
