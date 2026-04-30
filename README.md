@@ -21,41 +21,9 @@ Utilities, shared instructions, skills, prompts, and local extension packages fo
 | [`obsidian-cli`](skills/obsidian-cli/) | Obsidian vault workflows using the local `obsidian` CLI when its index/app state helps, and direct Markdown edits when plain file tools are better. | Notes, vaults, daily notes, tasks, links, tags, properties, bases, bookmarks, plugins, themes, sync, workspace state, or the `obsidian` command. |
 | [`sentry-cli`](skills/sentry-cli/) | Sentry CLI workflows for issues, events, projects, organizations, API calls, and authentication. | Viewing issues, events, projects, organizations, making Sentry API calls, or authenticating with Sentry via CLI. |
 
-Store skills as `skills/<skill-name>/SKILL.md`. Skill names must match their directory names.
+Store skills as `skills/<skill-name>/SKILL.md`; the repo copy is the source of truth and local agents consume symlinked directories under `~/.agents/skills/`.
 
-### Importing Skills With `gh skill`
-
-Use this repo's `skills/` directory as the source of truth for imported third-party skills. Always import updateable external skills from GitHub so `gh skill update` can track the source metadata embedded in `SKILL.md`.
-
-```bash
-# Search or preview GitHub-hosted skills.
-gh skill search QUERY
-gh skill preview OWNER/REPO SKILL_OR_PATH
-
-# Import one skill into ./skills/<skill-name>/.
-gh skill install OWNER/REPO SKILL_OR_PATH --dir skills --force
-
-# Example: import the Sentry CLI skill from its exact GitHub path.
-gh skill install getsentry/cli plugins/sentry-cli/skills/sentry-cli --dir skills --force
-```
-
-`gh skill install` uses the latest tagged release by default, then the default branch if no tag is available. Commit the imported `skills/<skill-name>/` directory; there is no separate lockfile.
-
-Keep imported skills current with:
-
-```bash
-# Dry check without changing files.
-mise run skills-updates-check
-
-# Apply GitHub-sourced skill updates, then validate.
-mise run skills-update
-```
-
-After adding or updating skills, expose this repo's source copy to local agents with:
-
-```bash
-python3 setup.py skills link --replace-symlinks
-```
+Use [`docs/setup-guide.md`](docs/setup-guide.md#2-agent-skills-management) for the operational workflow: importing skills with `gh skill`, updating GitHub-sourced skills, validating them with `setup.py`, and linking them into the user-level skills directory. [`skills/README.md`](skills/README.md) keeps the shorter format and layout notes.
 
 ## Pi Prompt Templates
 

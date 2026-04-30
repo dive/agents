@@ -18,25 +18,6 @@ Requirements from the Agent Skills spec:
 - `name` is required, must match the directory name, and should use lowercase letters, numbers, and hyphens
 - `description` is required and should say what the skill does and when to use it
 
-Import updateable external skills from GitHub with `gh skill`:
+This directory is the repo-managed source of truth. Local agent hosts consume the same skill directories through symlinks created under `~/.agents/skills/<skill-name>`.
 
-```bash
-gh skill install OWNER/REPO SKILL_OR_PATH --dir skills --force
-gh skill update --dir skills --dry-run
-gh skill update --dir skills --all
-```
-
-Link repo skills into the user-level interoperability path:
-
-```bash
-python3 setup.py skills link
-```
-
-Check discovery, validation, and link status:
-
-```bash
-python3 setup.py skills health
-python3 setup.py skills list
-```
-
-The links are created under `~/.agents/skills/<skill-name>`.
+For the operational workflow, use [`../docs/setup-guide.md`](../docs/setup-guide.md#2-agent-skills-management). That guide covers `gh skill` imports and updates, `setup.py` validation, and linking repo skills into the user-level skills directory.
