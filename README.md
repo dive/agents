@@ -19,22 +19,25 @@ Utilities, shared instructions, skills, prompts, and local extension packages fo
 | Skill | What it adds | When to use |
 | --- | --- | --- |
 | [`obsidian-cli`](skills/obsidian-cli/) | Obsidian vault workflows using the local `obsidian` CLI when its index/app state helps, and direct Markdown edits when plain file tools are better. | Notes, vaults, daily notes, tasks, links, tags, properties, bases, bookmarks, plugins, themes, sync, workspace state, or the `obsidian` command. |
+| [`sentry-cli`](skills/sentry-cli/) | Sentry CLI workflows for issues, events, projects, organizations, API calls, and authentication. | Viewing issues, events, projects, organizations, making Sentry API calls, or authenticating with Sentry via CLI. |
 
 Store skills as `skills/<skill-name>/SKILL.md`. Skill names must match their directory names.
 
 ### Importing Skills With `npx skills`
 
-Use this repo's `skills/` directory as the source of truth for imported third-party skills. Install them into this repo with the `openclaw` project target because that target writes to the plain `./skills/<skill-name>/` layout used here:
+Use this repo's `skills/` directory as the source of truth for imported third-party skills. Install them into this repo with the `openclaw` project target because that target writes to the plain `./skills/<skill-name>/` layout used here.
+
+Always import skills from a GitHub source (`OWNER/REPO` or `OWNER/REPO/SUBPATH`) so `npx skills update -p -y` can track `skillPath` and update them later.
 
 ```bash
-# Preview skills available from a source repo/package.
-npx skills add OWNER/REPO --list
+# Preview skills available from a GitHub source.
+npx skills add OWNER/REPO[/SUBPATH] --list
 
 # Import one skill into ./skills/<skill-name>/ and record its source in skills-lock.json.
-npx skills add OWNER/REPO --skill SKILL_NAME --agent openclaw -y
+npx skills add OWNER/REPO[/SUBPATH] --skill SKILL_NAME --agent openclaw -y
 
-# Import every skill from a source into ./skills/ and record them in skills-lock.json.
-npx skills add OWNER/REPO --skill '*' --agent openclaw -y
+# Import every skill from a GitHub source into ./skills/ and record them in skills-lock.json.
+npx skills add OWNER/REPO[/SUBPATH] --skill '*' --agent openclaw -y
 ```
 
 Commit both the imported `skills/<skill-name>/` directory and `skills-lock.json`. Do not use `--all` in this repo: it means all skills for all agents and can create generated `.claude/`, `.codex/`, `.pi/`, and `.agents/` install directories.
@@ -48,16 +51,6 @@ mise run skills-updates-check
 # Apply automatic updates to ./skills/ from skills-lock.json, then validate.
 mise run skills-update
 ```
-
-Known edge case: `npx skills update` currently does not update non-GitHub/well-known sources reliably. For example, `sentry-cli` from `https://cli.sentry.dev` may be reported as “installed before skillPath tracking” and skipped. Until upstream support lands, refresh that kind of skill by reinstalling the source into this repo:
-
-```bash
-npx skills add https://cli.sentry.dev --agent openclaw -y
-python3 setup.py skills health --strict
-git diff -- skills/sentry-cli skills-lock.json
-```
-
-Do not use the suggested `npx skills add cli.sentry.dev -y` form for this edge case; without `https://`, the CLI treats it as a Git repository name. Track upstream support in [`vercel-labs/skills#386`](https://github.com/vercel-labs/skills/issues/386).
 
 After adding or updating skills, expose this repo's source copy to local agents with:
 
@@ -92,7 +85,7 @@ python3 setup.py skills list
 python3 setup.py prompts list
 
 # Import/update third-party skills into this repo's ./skills source tree
-npx skills add OWNER/REPO --skill SKILL_NAME --agent openclaw -y
+npx skills add OWNER/REPO[/SUBPATH] --skill SKILL_NAME --agent openclaw -y
 mise run skills-updates-check
 mise run skills-update
 

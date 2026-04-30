@@ -65,12 +65,14 @@ python3 setup.py skills link --replace-symlinks
 
 Use `npx skills` to import external skills into this repo's `skills/` source tree. Use the `openclaw` project target because it writes to the plain `./skills/<skill-name>/` layout used here.
 
+Always import skills from a GitHub source (`OWNER/REPO` or `OWNER/REPO/SUBPATH`) so `npx skills update -p -y` can track `skillPath` and update them later.
+
 ```bash
-# See what a source provides without installing it.
-npx skills add OWNER/REPO --list
+# See what a GitHub source provides without installing it.
+npx skills add OWNER/REPO[/SUBPATH] --list
 
 # Import one skill into ./skills/<skill-name>/ and update skills-lock.json.
-npx skills add OWNER/REPO --skill SKILL_NAME --agent openclaw -y
+npx skills add OWNER/REPO[/SUBPATH] --skill SKILL_NAME --agent openclaw -y
 
 # Check whether tracked project skills would update, using a temporary copy.
 mise run skills-updates-check
@@ -78,16 +80,6 @@ mise run skills-updates-check
 # Apply automatic tracked updates, then run strict health validation.
 mise run skills-update
 ```
-
-Known edge case: `npx skills update` currently does not update non-GitHub/well-known sources reliably. For example, `sentry-cli` from `https://cli.sentry.dev` may be reported as “installed before skillPath tracking” and skipped. Refresh those manually by reinstalling the source into this repo:
-
-```bash
-npx skills add https://cli.sentry.dev --agent openclaw -y
-python3 setup.py skills health --strict
-git diff -- skills/sentry-cli skills-lock.json
-```
-
-Do not use the suggested `npx skills add cli.sentry.dev -y` form for this edge case; without `https://`, the CLI treats it as a Git repository name. Track upstream support in [`vercel-labs/skills#386`](https://github.com/vercel-labs/skills/issues/386).
 
 ### Notes
 
