@@ -166,6 +166,8 @@ mise run skills-list
 mise run skills-health
 mise run skills-link
 mise run skills-link-replace
+mise run skills-updates-check
+mise run skills-update
 
 # pi prompt template tasks
 mise run prompts-list

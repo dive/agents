@@ -22,6 +22,39 @@ Utilities, shared instructions, skills, prompts, and local extension packages fo
 
 Store skills as `skills/<skill-name>/SKILL.md`. Skill names must match their directory names.
 
+### Importing Skills With `npx skills`
+
+Use this repo's `skills/` directory as the source of truth for imported third-party skills. Install them into this repo with the `openclaw` project target because that target writes to the plain `./skills/<skill-name>/` layout used here:
+
+```bash
+# Preview skills available from a source repo/package.
+npx skills add OWNER/REPO --list
+
+# Import one skill into ./skills/<skill-name>/ and record its source in skills-lock.json.
+npx skills add OWNER/REPO --skill SKILL_NAME --agent openclaw -y
+
+# Import every skill from a source into ./skills/ and record them in skills-lock.json.
+npx skills add OWNER/REPO --skill '*' --agent openclaw -y
+```
+
+Commit both the imported `skills/<skill-name>/` directory and `skills-lock.json`. Do not use `--all` in this repo: it means all skills for all agents and can create generated `.claude/`, `.codex/`, `.pi/`, and `.agents/` install directories.
+
+Keep imported skills current with:
+
+```bash
+# Dry check in a temporary copy; exits non-zero if an automatic update would change files.
+mise run skills-updates-check
+
+# Apply automatic updates to ./skills/ from skills-lock.json, then validate.
+mise run skills-update
+```
+
+After adding or updating skills, expose this repo's source copy to local agents with:
+
+```bash
+python3 setup.py skills link --replace-symlinks
+```
+
 ## Pi Prompt Templates
 
 | Prompt | What it does | Usage |
@@ -47,6 +80,11 @@ Each package is self-contained and can be installed directly from a local clone.
 python3 setup.py list
 python3 setup.py skills list
 python3 setup.py prompts list
+
+# Import/update third-party skills into this repo's ./skills source tree
+npx skills add OWNER/REPO --skill SKILL_NAME --agent openclaw -y
+mise run skills-updates-check
+mise run skills-update
 
 # Link repo-managed files into user-level locations
 python3 setup.py link
