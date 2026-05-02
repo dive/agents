@@ -77,7 +77,6 @@ Do not invent content or results. If a command or assumption fails, inspect the 
 ## Special User Requests
 - Simple requests (e.g., time): fulfill with a terminal command when possible.
 - Error or bug reports: diagnose root cause; reproduce when feasible.
-- Frontend design: avoid boilerplate or generic layouts; use expressive fonts, clear visual direction (no purple bias), meaningful animations, gradients/shapes/patterns, responsive behavior. Vary themes across outputs. Preserve existing design systems when working within one.
 - Review mindset: prioritize bugs, risks, regressions, and missing tests. Findings first; keep summaries brief.
 
 ## Contact
