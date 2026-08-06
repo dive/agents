@@ -16,16 +16,27 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function getPiInvocationCandidates(): Array<{ command: string; argsPrefix: string[]; label: string }> {
-  const candidates: Array<{ command: string; argsPrefix: string[]; label: string }> = [{ command: "pi", argsPrefix: [], label: "pi" }];
+type PiInvocation = { command: string; argsPrefix: string[]; label: string };
 
+function getPiInvocationCandidates(): PiInvocation[] {
+  const candidates: PiInvocation[] = [{ command: "pi", argsPrefix: [], label: "pi" }];
+
+  const execPath = process.execPath.trim();
+  if (!execPath) return candidates;
+
+  const runtimeName = path.basename(execPath).toLowerCase();
+  const isScriptRuntime =
+    runtimeName === "node" || runtimeName === "node.exe" || runtimeName === "bun" || runtimeName === "bun.exe";
   const cliScript = process.argv[1]?.trim();
-  if (cliScript) {
+
+  if (isScriptRuntime && cliScript) {
     candidates.push({
-      command: process.execPath,
+      command: execPath,
       argsPrefix: [cliScript],
-      label: `${process.execPath} ${cliScript}`,
+      label: `${execPath} ${cliScript}`,
     });
+  } else {
+    candidates.push({ command: execPath, argsPrefix: [], label: execPath });
   }
 
   return candidates;

@@ -11,12 +11,12 @@ Local monorepo for independently installable [`pi`](https://github.com/badlogic/
 Extension entrypoints:
 
 - [`ghostty-title-progress.ts`](packages/pi-ghostty/ghostty-title-progress.ts)
-  - animated working spinner in terminal title
+  - working and result state in the terminal title
   - active tool name while running
   - model + thinking level in title (`model (low|medium|high|...)`)
   - git branch marker with dirty state (`branch*`)
   - short result flash in title (`✓` / `✗`)
-  - relies on pi's built-in terminal progress support
+  - relies on pi's built-in animated terminal progress support
 - [`ghostty-open-response.ts`](packages/pi-ghostty/ghostty-open-response.ts)
   - writes the latest assistant response Markdown unchanged to `/tmp`
   - opens it with `$EDITOR` in a new Ghostty window via Ghostty's macOS scripting dictionary

@@ -5,8 +5,6 @@ import { promisify } from "node:util";
 
 import { isGhosttyTerminal } from "./terminal-osc";
 
-const BRAILLE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
-const SPINNER_INTERVAL_MS = 80;
 const RESULT_FLASH_MS = 900;
 const GIT_REFRESH_INTERVAL_MS = 5_000;
 
@@ -33,24 +31,17 @@ export default function (pi: ExtensionAPI) {
   let currentModel: string | undefined;
   let currentCwd: string = process.cwd();
 
-  let spinnerTimer: ReturnType<typeof setInterval> | undefined;
   let resultFlashTimer: ReturnType<typeof setTimeout> | undefined;
 
-  let frameIndex = 0;
   let isWorking = false;
-  let lastTurnHadError = false;
+  let lastRunHadError = false;
+  let sessionActive = false;
   let gitLabel: string | undefined;
   let gitRefreshTimer: ReturnType<typeof setInterval> | undefined;
   let gitRefreshInFlight = false;
 
   const activeTools = new Map<string, string>();
   let activeToolCallId: string | undefined;
-
-  function clearSpinnerTimer() {
-    if (!spinnerTimer) return;
-    clearInterval(spinnerTimer);
-    spinnerTimer = undefined;
-  }
 
   function clearResultFlashTimer() {
     if (!resultFlashTimer) return;
@@ -104,8 +95,8 @@ export default function (pi: ExtensionAPI) {
   async function refreshGitLabelAndRender(ctx: ExtensionContext) {
     const previous = gitLabel;
     await refreshGitLabel();
-    if (!isWorking && previous !== gitLabel) {
-      setIdleTitle(ctx);
+    if (sessionActive && previous !== gitLabel) {
+      renderCurrentTitle(ctx);
     }
   }
 
@@ -140,41 +131,32 @@ export default function (pi: ExtensionAPI) {
   }
 
   function renderWorkingTitle(ctx: ExtensionContext) {
-    const frame = BRAILLE_FRAMES[frameIndex % BRAILLE_FRAMES.length];
-    frameIndex += 1;
-
     const base = buildBaseTitle();
     const tool = getActiveToolName();
 
-    ctx.ui.setTitle(tool ? `${frame} ${base} · ${tool}` : `${frame} ${base}`);
+    ctx.ui.setTitle(tool ? `… ${base} · ${tool}` : `… ${base}`);
+  }
+
+  function renderCurrentTitle(ctx: ExtensionContext) {
+    if (isWorking) renderWorkingTitle(ctx);
+    else setIdleTitle(ctx);
   }
 
   function startWorking(ctx: ExtensionContext) {
-    clearSpinnerTimer();
     clearResultFlashTimer();
-
     isWorking = true;
-    frameIndex = 0;
-
     renderWorkingTitle(ctx);
-
-    spinnerTimer = setInterval(() => {
-      renderWorkingTitle(ctx);
-    }, SPINNER_INTERVAL_MS);
-    spinnerTimer.unref?.();
   }
 
   function stopWorking(ctx: ExtensionContext) {
     isWorking = false;
-
-    clearSpinnerTimer();
     clearResultFlashTimer();
 
     activeTools.clear();
     activeToolCallId = undefined;
 
     const base = buildBaseTitle();
-    const resultSymbol = lastTurnHadError ? "✗" : "✓";
+    const resultSymbol = lastRunHadError ? "✗" : "✓";
     ctx.ui.setTitle(`${resultSymbol} ${base}`);
 
     resultFlashTimer = setTimeout(() => {
@@ -186,10 +168,9 @@ export default function (pi: ExtensionAPI) {
 
   function resetAll(ctx?: ExtensionContext) {
     isWorking = false;
-    lastTurnHadError = false;
+    lastRunHadError = false;
     gitLabel = undefined;
 
-    clearSpinnerTimer();
     clearResultFlashTimer();
     clearGitRefreshTimer();
 
@@ -201,23 +182,34 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_start", async (_event, ctx) => {
     if (!ghosttyEnabled || ctx.mode !== "tui") return;
+    sessionActive = true;
     currentModel = ctx.model?.id;
     currentCwd = ctx.cwd;
     startGitRefreshLoop(ctx);
     setIdleTitle(ctx);
   });
 
+  pi.on("session_info_changed", async (_event, ctx) => {
+    if (!ghosttyEnabled || ctx.mode !== "tui") return;
+    renderCurrentTitle(ctx);
+  });
+
   pi.on("model_select", async (event, ctx) => {
     if (!ghosttyEnabled || ctx.mode !== "tui") return;
     currentModel = event.model.id;
-    if (!isWorking) setIdleTitle(ctx);
+    renderCurrentTitle(ctx);
+  });
+
+  pi.on("thinking_level_select", async (_event, ctx) => {
+    if (!ghosttyEnabled || ctx.mode !== "tui") return;
+    renderCurrentTitle(ctx);
   });
 
   pi.on("agent_start", async (_event, ctx) => {
     if (!ghosttyEnabled || ctx.mode !== "tui") return;
     if (isWorking) return;
 
-    lastTurnHadError = false;
+    lastRunHadError = false;
     startWorking(ctx);
   });
 
@@ -225,7 +217,7 @@ export default function (pi: ExtensionAPI) {
     if (!ghosttyEnabled || ctx.mode !== "tui") return;
     if (!isWorking) return;
 
-    lastTurnHadError = didAgentEndWithError(event.messages);
+    lastRunHadError = didAgentEndWithError(event.messages);
   });
 
   pi.on("agent_settled", async (_event, ctx) => {
@@ -233,24 +225,27 @@ export default function (pi: ExtensionAPI) {
     if (!isWorking) return;
 
     await refreshGitLabel();
-    stopWorking(ctx);
+    if (sessionActive) stopWorking(ctx);
   });
 
-  pi.on("tool_execution_start", async (event, _ctx) => {
+  pi.on("tool_execution_start", async (event, ctx) => {
     if (!isWorking) return;
     activeTools.set(event.toolCallId, event.toolName);
     activeToolCallId = event.toolCallId;
+    renderWorkingTitle(ctx);
   });
 
-  pi.on("tool_execution_end", async (event, _ctx) => {
+  pi.on("tool_execution_end", async (event, ctx) => {
     if (!isWorking) return;
     activeTools.delete(event.toolCallId);
     if (activeToolCallId === event.toolCallId) {
       activeToolCallId = getLastMapKey(activeTools);
     }
+    renderWorkingTitle(ctx);
   });
 
   pi.on("session_shutdown", async (_event, ctx) => {
+    sessionActive = false;
     resetAll(ctx);
   });
 }
