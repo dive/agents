@@ -18,6 +18,15 @@ function getLastMapKey<K, V>(map: Map<K, V>): K | undefined {
   return key;
 }
 
+function didAgentEndWithError(messages: Array<{ role: string; stopReason?: string }>): boolean {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const message = messages[i];
+    if (message.role !== "assistant") continue;
+    return message.stopReason === "error" || message.stopReason === "aborted";
+  }
+  return false;
+}
+
 export default function (pi: ExtensionAPI) {
   const ghosttyEnabled = isGhosttyTerminal();
 
@@ -187,11 +196,11 @@ export default function (pi: ExtensionAPI) {
     activeTools.clear();
     activeToolCallId = undefined;
 
-    if (ctx?.hasUI) setIdleTitle(ctx);
+    if (ghosttyEnabled && ctx?.mode === "tui") setIdleTitle(ctx);
   }
 
   pi.on("session_start", async (_event, ctx) => {
-    if (!ctx.hasUI) return;
+    if (!ghosttyEnabled || ctx.mode !== "tui") return;
     currentModel = ctx.model?.id;
     currentCwd = ctx.cwd;
     startGitRefreshLoop(ctx);
@@ -199,19 +208,30 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.on("model_select", async (event, ctx) => {
-    if (!ctx.hasUI) return;
+    if (!ghosttyEnabled || ctx.mode !== "tui") return;
     currentModel = event.model.id;
     if (!isWorking) setIdleTitle(ctx);
   });
 
   pi.on("agent_start", async (_event, ctx) => {
-    if (!ctx.hasUI) return;
+    if (!ghosttyEnabled || ctx.mode !== "tui") return;
+    if (isWorking) return;
+
     lastTurnHadError = false;
     startWorking(ctx);
   });
 
-  pi.on("agent_end", async (_event, ctx) => {
-    if (!ctx.hasUI) return;
+  pi.on("agent_end", async (event, ctx) => {
+    if (!ghosttyEnabled || ctx.mode !== "tui") return;
+    if (!isWorking) return;
+
+    lastTurnHadError = didAgentEndWithError(event.messages);
+  });
+
+  pi.on("agent_settled", async (_event, ctx) => {
+    if (!ghosttyEnabled || ctx.mode !== "tui") return;
+    if (!isWorking) return;
+
     await refreshGitLabel();
     stopWorking(ctx);
   });
@@ -225,9 +245,6 @@ export default function (pi: ExtensionAPI) {
   pi.on("tool_execution_end", async (event, _ctx) => {
     if (!isWorking) return;
     activeTools.delete(event.toolCallId);
-    if (event.isError) {
-      lastTurnHadError = true;
-    }
     if (activeToolCallId === event.toolCallId) {
       activeToolCallId = getLastMapKey(activeTools);
     }

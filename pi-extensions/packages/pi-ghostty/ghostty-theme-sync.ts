@@ -425,7 +425,7 @@ export default function (pi: ExtensionAPI) {
   pi.registerCommand("ghostty-sync", {
     description: "Sync pi theme from current Ghostty background (OSC 11)",
     handler: async (_args, ctx) => {
-      if (!ctx.hasUI) return;
+      if (ctx.mode !== "tui") return;
       if (!ghosttyEnabled) {
         ctx.ui.notify("ghostty-sync: Ghostty not detected", "warning");
         return;
@@ -479,7 +479,7 @@ export default function (pi: ExtensionAPI) {
   }
 
   pi.on("session_start", async (_event, ctx) => {
-    if (!ctx.hasUI) return;
+    if (ctx.mode !== "tui") return;
     if (!ghosttyEnabled) return;
     setupSession(ctx);
   });

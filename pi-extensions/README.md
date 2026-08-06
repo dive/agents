@@ -30,7 +30,8 @@ Extension entrypoints:
 ### [`pi-notifications`](packages/pi-notifications/)
 
 - [`index.ts`](packages/pi-notifications/index.ts)
-  - sends a Ghostty desktop notification after each completed agent run
+  - sends one Ghostty desktop notification after the agent fully settles
+  - includes retries and queued continuations in the duration
   - includes status (done/error) + duration in the message
 
 ### [`pi-session-export-html`](packages/pi-session-export-html/)

@@ -24,6 +24,7 @@ export default function (pi: ExtensionAPI) {
   let wasWorking = false;
   let turnStartedAt = 0;
   let currentCwd: string = process.cwd();
+  let lastRunHadError = false;
 
   function buildNotificationMessage(status: "done" | "error", durationMs: number): string {
     const cwd = path.basename(currentCwd);
@@ -55,28 +56,38 @@ export default function (pi: ExtensionAPI) {
     currentCwd = ctx.cwd;
   });
 
-  pi.on("agent_start", async () => {
+  pi.on("agent_start", async (_event, ctx) => {
+    if (!ghosttyEnabled || ctx.mode !== "tui") return;
+    if (wasWorking) return;
+
     wasWorking = true;
     turnStartedAt = Date.now();
+    lastRunHadError = false;
   });
 
-  pi.on("agent_end", async (event) => {
-    if (!ghosttyEnabled) return;
+  pi.on("agent_end", async (event, ctx) => {
+    if (!ghosttyEnabled || ctx.mode !== "tui") return;
     if (!wasWorking) return;
 
-    wasWorking = false;
+    lastRunHadError = didAgentEndWithError(event.messages);
+  });
+
+  pi.on("agent_settled", async (_event, ctx) => {
+    if (!ghosttyEnabled || ctx.mode !== "tui") return;
+    if (!wasWorking) return;
 
     const durationMs = turnStartedAt > 0 ? Date.now() - turnStartedAt : 0;
-    const hadError = didAgentEndWithError(event.messages);
+    notifyGhostty(buildNotificationMessage(lastRunHadError ? "error" : "done", durationMs));
 
+    wasWorking = false;
     turnStartedAt = 0;
-
-    notifyGhostty(buildNotificationMessage(hadError ? "error" : "done", durationMs));
+    lastRunHadError = false;
   });
 
   pi.on("session_shutdown", async () => {
     wasWorking = false;
     turnStartedAt = 0;
+    lastRunHadError = false;
     osc.close();
   });
 }
