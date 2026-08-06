@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import type { ExtensionAPI, ExtensionContext, SessionMessageEntry } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext, SessionMessageEntry } from "@earendil-works/pi-coding-agent";
 
 const OUTPUT_DIR = path.join(os.tmpdir(), "pi-ghostty-responses");
 

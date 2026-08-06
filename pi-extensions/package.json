@@ -15,7 +15,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
-    "@mariozechner/pi-coding-agent": "^0.70.5",
+    "@earendil-works/pi-coding-agent": "^0.83.0",
     "@types/node": "^24.7.2",
     "typescript": "^5.9.3"
   },
