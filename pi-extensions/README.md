@@ -17,10 +17,6 @@ Extension entrypoints:
   - git branch marker with dirty state (`branch*`)
   - short result flash in title (`✓` / `✗`)
   - relies on pi's built-in terminal progress support
-- [`ghostty-theme-sync.ts`](packages/pi-ghostty/ghostty-theme-sync.ts)
-  - OSC 11 background query parsing
-  - auto switch between light/dark pi themes in Ghostty
-  - slash command: `/ghostty-sync`
 - [`ghostty-open-response.ts`](packages/pi-ghostty/ghostty-open-response.ts)
   - writes the latest assistant response Markdown unchanged to `/tmp`
   - opens it with `$EDITOR` in a new Ghostty window via Ghostty's macOS scripting dictionary
@@ -60,32 +56,18 @@ pi install -l "$REPO_DIR/pi-extensions/packages/pi-notifications"
 pi install -l "$REPO_DIR/pi-extensions/packages/pi-session-export-html"
 ```
 
-## Theme sync customization (pi-ghostty)
+## Automatic light/dark themes
 
-`ghostty-theme-sync.ts` reads theme names from settings (project overrides global):
-
-- `.pi/settings.json`
-- `$PI_CODING_AGENT_DIR/settings.json` (or `~/.pi/agent/settings.json` when the env var is unset)
+Pi handles terminal color-scheme changes natively. Configure the light theme first and dark theme second:
 
 ```json
 {
-  "pi-ghostty-extension": {
-    "themes": {
-      "dark": "dark",
-      "light": "light"
-    }
-  }
+  "theme": "light/dark"
 }
 ```
 
-Fallback environment variables:
-
-- `PI_GHOSTTY_THEME_DARK`
-- `PI_GHOSTTY_THEME_LIGHT`
-
 ## Commands
 
-- `/ghostty-sync` — force a manual Ghostty OSC 11 theme sync
 - `/open-response` — open the latest assistant response Markdown with `$EDITOR` in a new Ghostty window
 - `/open-export` — export current session to `/tmp/*.html` and open it
 

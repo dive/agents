@@ -37,7 +37,7 @@ Store prompt templates as direct Markdown files under `destroot/pi/agent/prompts
 
 | Package | What it adds | Commands |
 | --- | --- | --- |
-| [`pi-ghostty`](pi-extensions/packages/pi-ghostty/) | Ghostty terminal title/status UX, OSC 11 light/dark theme sync, and opening the latest assistant response with `$EDITOR` in Ghostty. | `/ghostty-sync`, `/open-response` |
+| [`pi-ghostty`](pi-extensions/packages/pi-ghostty/) | Ghostty terminal title/status UX and opening the latest assistant response with `$EDITOR` in Ghostty. | `/open-response` |
 | [`pi-notifications`](pi-extensions/packages/pi-notifications/) | Ghostty desktop notifications after the agent fully settles, including retries, queued continuations, duration, and result status. | *(no commands)* |
 | [`pi-session-export-html`](pi-extensions/packages/pi-session-export-html/) | Exports the current pi session to `/tmp/*.html` and opens it in the default browser. | `/open-export` |
 
