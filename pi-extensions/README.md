@@ -73,6 +73,14 @@ Pi handles terminal color-scheme changes natively. Configure the light theme fir
 
 `pi-notifications` has no slash commands. `pi-ghostty` also registers `alt+o` for `/open-response`.
 
+## Validation
+
+```bash
+cd pi-extensions
+npm run validate         # typecheck and smoke-load every package
+npm run validate:latest  # also require the latest Pi CLI and type package
+```
+
 ## Related docs
 
 - Root overview: [`../README.md`](../README.md)

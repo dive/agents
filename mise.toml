@@ -73,6 +73,10 @@ run = "python3 setup.py prompts link --replace-symlinks"
 description = "Check pi-extensions install health (global + local)"
 run = "python3 setup.py extensions health --scope both"
 
+[tasks.pi-extensions-validate]
+description = "Typecheck and smoke-load extensions against the latest Pi release"
+run = "cd pi-extensions && npm run validate:latest"
+
 [tasks.pi-extensions-install]
 description = "Install all pi-extensions in global pi settings"
 run = "python3 setup.py extensions install --scope global"

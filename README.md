@@ -66,6 +66,7 @@ python3 setup.py health
 python3 setup.py skills health
 python3 setup.py prompts health
 python3 setup.py extensions health --scope both
+(cd pi-extensions && npm run validate:latest)
 
 # Install all pi extension packages
 python3 setup.py extensions install --scope global

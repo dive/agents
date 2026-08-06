@@ -141,6 +141,9 @@ python3 setup.py extensions health --scope both
 
 # Strict mode: non-zero exit if missing packages/settings errors are found
 python3 setup.py extensions health --scope both --strict
+
+# Typecheck and smoke-load packages against the latest Pi release
+(cd pi-extensions && npm run validate:latest)
 ```
 
 ### Install
@@ -202,6 +205,7 @@ mise run prompts-link-replace
 
 # pi extension tasks
 mise run pi-extensions-health
+mise run pi-extensions-validate
 mise run pi-extensions-install
 mise run pi-extensions-install-local
 mise run pi-extensions-uninstall

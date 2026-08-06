@@ -12,7 +12,10 @@
     "packages/*"
   ],
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json"
+    "smoke-load": "node ./scripts/smoke-load.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "validate": "npm run typecheck && npm run smoke-load",
+    "validate:latest": "node ./scripts/assert-latest-pi.mjs && npm run validate"
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "^0.83.0",
