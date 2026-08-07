@@ -30,7 +30,14 @@ if (installedPackageJson.version !== latest.version) {
   );
 }
 
-const cliVersion = spawnSync("pi", ["--version"], { encoding: "utf8" });
+const externalPath = (process.env.PATH ?? "")
+  .split(path.delimiter)
+  .filter((entry) => !(path.basename(entry) === ".bin" && path.basename(path.dirname(entry)) === "node_modules"))
+  .join(path.delimiter);
+const cliVersion = spawnSync("pi", ["--version"], {
+  encoding: "utf8",
+  env: { ...process.env, PATH: externalPath },
+});
 if (cliVersion.error) throw cliVersion.error;
 if (cliVersion.status !== 0) {
   throw new Error(cliVersion.stderr.trim() || `pi --version exited with code ${cliVersion.status}`);
