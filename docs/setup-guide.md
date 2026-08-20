@@ -88,7 +88,7 @@ When adding or removing a prompt, update `mise.toml` and the prompt inventory in
 
 ## 4) Pi extension package management
 
-The repo-managed packages live under `pi-extensions/packages/`. The install and uninstall tasks enumerate the packages explicitly so the bootstrap inventory is reviewable.
+The repo-managed packages live under `pi-extensions/packages/`. The root `pi-extensions/package.json` manifest aggregates their entrypoints, so the install and uninstall tasks manage the workspace as one pi package.
 
 ### Inspect and validate
 
@@ -112,7 +112,16 @@ mise run pi-extensions-install-local
 mise run pi-extensions-uninstall-local
 ```
 
-The install and uninstall tasks are idempotent. Pi resolves global settings through `PI_CODING_AGENT_DIR` when set and otherwise uses `~/.pi/agent/settings.json`. Project-local settings remain generated and ignored by Git.
+The install tasks are idempotent. Pi resolves global settings through `PI_CODING_AGENT_DIR` when set and otherwise uses `~/.pi/agent/settings.json`. Project-local settings remain generated and ignored by Git.
+
+If an older checkout installed the three packages separately, remove those settings entries once before applying the aggregate install:
+
+```bash
+pi remove ./pi-extensions/packages/pi-ghostty
+pi remove ./pi-extensions/packages/pi-notifications
+pi remove ./pi-extensions/packages/pi-session-export-html
+mise run pi-extensions-install
+```
 
 For one package, call pi directly:
 
@@ -123,7 +132,7 @@ pi remove ./pi-extensions/packages/pi-ghostty
 pi remove -l ./pi-extensions/packages/pi-ghostty
 ```
 
-Preview a task without executing it with `mise run --dry-run <task>`. When adding or removing an extension package, update the relevant task command lists in `mise.toml` and the extension inventory in `README.md`.
+Preview a task without executing it with `mise run --dry-run <task>`. When adding or removing an extension package, update the root `pi.extensions` manifest and the extension inventory in `README.md`.
 
 ## 5) Task inventory
 

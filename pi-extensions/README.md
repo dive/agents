@@ -38,6 +38,17 @@ Extension entrypoints:
   - opens the exported file in the default browser
   - slash command: `/open-export`
 
+## Install all extensions
+
+The workspace manifest aggregates all extension entrypoints, so install the workspace when all packages are wanted:
+
+```bash
+REPO_DIR=/path/to/agents
+
+pi install "$REPO_DIR/pi-extensions"
+pi install -l "$REPO_DIR/pi-extensions"
+```
+
 ## Install per extension
 
 Each package is self-contained, so these installs work directly from a local clone without running `npm install` in the monorepo first.

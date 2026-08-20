@@ -62,61 +62,19 @@ run = "npm run validate:latest"
 
 [tasks.pi-extensions-install]
 description = "Install all pi-extensions in global pi settings"
-run = [
-  "pi install ./pi-extensions/packages/pi-ghostty",
-  "pi install ./pi-extensions/packages/pi-notifications",
-  "pi install ./pi-extensions/packages/pi-session-export-html",
-]
+run = "pi install ./pi-extensions"
 
 [tasks.pi-extensions-install-local]
 description = "Install all pi-extensions in project .pi/settings.json"
-run = [
-  "pi install -l ./pi-extensions/packages/pi-ghostty",
-  "pi install -l ./pi-extensions/packages/pi-notifications",
-  "pi install -l ./pi-extensions/packages/pi-session-export-html",
-]
+run = "pi install -l ./pi-extensions"
 
 [tasks.pi-extensions-uninstall]
 description = "Uninstall all pi-extensions from global pi settings"
-run = """
-#!/usr/bin/env bash
-set -euo pipefail
-remove_if_installed() {
-  local output status
-  set +e
-  output="$(pi remove "$1" 2>&1)"
-  status=$?
-  set -e
-  printf '%s\n' "$output"
-  if [ "$status" -ne 0 ] && [[ "$output" != *"No matching package found"* ]]; then
-    return "$status"
-  fi
-}
-remove_if_installed ./pi-extensions/packages/pi-ghostty
-remove_if_installed ./pi-extensions/packages/pi-notifications
-remove_if_installed ./pi-extensions/packages/pi-session-export-html
-"""
+run = "pi remove ./pi-extensions"
 
 [tasks.pi-extensions-uninstall-local]
 description = "Uninstall all pi-extensions from project .pi/settings.json"
-run = """
-#!/usr/bin/env bash
-set -euo pipefail
-remove_if_installed() {
-  local output status
-  set +e
-  output="$(pi remove -l "$1" 2>&1)"
-  status=$?
-  set -e
-  printf '%s\n' "$output"
-  if [ "$status" -ne 0 ] && [[ "$output" != *"No matching package found"* ]]; then
-    return "$status"
-  fi
-}
-remove_if_installed ./pi-extensions/packages/pi-ghostty
-remove_if_installed ./pi-extensions/packages/pi-notifications
-remove_if_installed ./pi-extensions/packages/pi-session-export-html
-"""
+run = "pi remove -l ./pi-extensions"
 
 [tasks.bootstrap]
 description = "Install repo-managed pi extensions after tools and dotfiles"
