@@ -1,34 +1,32 @@
-[tasks.list]
-description = "Show configured AGENTS.md link targets"
-run = "python3 setup.py list"
+[tools]
+"github:agent-ecosystem/skill-validator" = "1.6.0"
+github-cli = "latest"
+node = "lts"
+pi = "latest"
 
-[tasks.link]
-description = "Create AGENTS.md links (safe mode)"
-run = "python3 setup.py link"
-
-[tasks.link-replace]
-description = "Create AGENTS.md links and replace stale symlinks"
-run = "python3 setup.py link --replace-symlinks"
-
-[tasks.health]
-description = "Check AGENTS.md link health"
-run = "python3 setup.py health"
-
-[tasks.skills-list]
-description = "List repo Agent Skills"
-run = "python3 setup.py skills list"
+[dotfiles]
+"~/.codex/AGENTS.md" = "global/AGENTS.md"
+"~/.claude/CLAUDE.md" = "global/AGENTS.md"
+"~/.config/opencode/AGENTS.md" = "global/AGENTS.md"
+"~/.pi/agent/APPEND_SYSTEM.md" = "global/AGENTS.md"
+"~/.config/amp/AGENTS.md" = "global/AGENTS.md"
+"~/.agents/skills/gh-stack" = "skills/gh-stack"
+"~/.agents/skills/obsidian-cli" = "skills/obsidian-cli"
+"~/.agents/skills/sentry-cli" = "skills/sentry-cli"
+"~/.pi/agent/prompts/review.md" = "destroot/pi/agent/prompts/review.md"
 
 [tasks.skills-health]
-description = "Check Agent Skills health"
-run = "python3 setup.py skills health"
-
-[tasks.skills-link]
-description = "Link repo Agent Skills into ~/.agents/skills"
-run = "python3 setup.py skills link"
-
-[tasks.skills-link-replace]
-description = "Link repo Agent Skills and replace stale symlinks"
-run = "python3 setup.py skills link --replace-symlinks"
+description = "Validate repo Agent Skills"
+run = """
+#!/usr/bin/env bash
+set +e
+skill-validator validate structure --allow-extra-frontmatter skills
+status=$?
+if [ "$status" -eq 2 ]; then
+  exit 0
+fi
+exit "$status"
+"""
 
 [tasks.skills-updates-check]
 description = "Preview gh skill updates for GitHub-sourced skills"
@@ -50,45 +48,76 @@ if [ -z "$skills" ]; then
 else
   gh skill update --dir skills --all $skills
 fi
-python3 setup.py skills health --strict
+mise run skills-health
 """
 
-[tasks.prompts-list]
-description = "List repo pi prompt templates"
-run = "python3 setup.py prompts list"
-
-[tasks.prompts-health]
-description = "Check pi prompt template health"
-run = "python3 setup.py prompts health"
-
-[tasks.prompts-link]
-description = "Link repo pi prompt templates into ~/.pi/agent/prompts"
-run = "python3 setup.py prompts link"
-
-[tasks.prompts-link-replace]
-description = "Link repo pi prompt templates and replace stale symlinks"
-run = "python3 setup.py prompts link --replace-symlinks"
-
 [tasks.pi-extensions-health]
-description = "Check pi-extensions install health (global + local)"
-run = "python3 setup.py extensions health --scope both"
+description = "List installed pi extensions"
+run = "pi list"
 
 [tasks.pi-extensions-validate]
 description = "Typecheck and smoke-load extensions against the latest Pi release"
-run = "cd pi-extensions && npm run validate:latest"
+dir = "pi-extensions"
+run = "npm run validate:latest"
 
 [tasks.pi-extensions-install]
 description = "Install all pi-extensions in global pi settings"
-run = "python3 setup.py extensions install --scope global"
+run = [
+  "pi install ./pi-extensions/packages/pi-ghostty",
+  "pi install ./pi-extensions/packages/pi-notifications",
+  "pi install ./pi-extensions/packages/pi-session-export-html",
+]
 
 [tasks.pi-extensions-install-local]
 description = "Install all pi-extensions in project .pi/settings.json"
-run = "python3 setup.py extensions install --scope local"
+run = [
+  "pi install -l ./pi-extensions/packages/pi-ghostty",
+  "pi install -l ./pi-extensions/packages/pi-notifications",
+  "pi install -l ./pi-extensions/packages/pi-session-export-html",
+]
 
 [tasks.pi-extensions-uninstall]
 description = "Uninstall all pi-extensions from global pi settings"
-run = "python3 setup.py extensions uninstall --scope global"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+remove_if_installed() {
+  local output status
+  set +e
+  output="$(pi remove "$1" 2>&1)"
+  status=$?
+  set -e
+  printf '%s\n' "$output"
+  if [ "$status" -ne 0 ] && [[ "$output" != *"No matching package found"* ]]; then
+    return "$status"
+  fi
+}
+remove_if_installed ./pi-extensions/packages/pi-ghostty
+remove_if_installed ./pi-extensions/packages/pi-notifications
+remove_if_installed ./pi-extensions/packages/pi-session-export-html
+"""
 
 [tasks.pi-extensions-uninstall-local]
 description = "Uninstall all pi-extensions from project .pi/settings.json"
-run = "python3 setup.py extensions uninstall --scope local"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+remove_if_installed() {
+  local output status
+  set +e
+  output="$(pi remove -l "$1" 2>&1)"
+  status=$?
+  set -e
+  printf '%s\n' "$output"
+  if [ "$status" -ne 0 ] && [[ "$output" != *"No matching package found"* ]]; then
+    return "$status"
+  fi
+}
+remove_if_installed ./pi-extensions/packages/pi-ghostty
+remove_if_installed ./pi-extensions/packages/pi-notifications
+remove_if_installed ./pi-extensions/packages/pi-session-export-html
+"""
+
+[tasks.bootstrap]
+description = "Install repo-managed pi extensions after tools and dotfiles"
+depends = ["pi-extensions-install"]
