@@ -20,4 +20,4 @@ Requirements from the Agent Skills spec:
 
 This directory is the repo-managed source of truth. Local agent hosts consume the same skill directories through symlinks created under `~/.agents/skills/<skill-name>`.
 
-For the operational workflow, use [`../docs/setup-guide.md`](../docs/setup-guide.md#2-agent-skills-management). That guide covers `gh skill` imports and updates, `setup.py` validation, and linking repo skills into the user-level skills directory.
+For the operational workflow, use [`../docs/setup-guide.md`](../docs/setup-guide.md#2-agent-skills-management). That guide covers `gh skill` imports and updates, standards validation, and applying repo skill links through Mise.

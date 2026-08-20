@@ -10,20 +10,21 @@ Utilities, shared instructions, skills, prompts, and local extension packages fo
 | [`destroot/pi/agent/prompts/`](destroot/pi/agent/prompts/) | Repo-managed pi prompt templates, linked into `~/.pi/agent/prompts/`. |
 | [`docs/`](docs/) | Setup and operational documentation. |
 | [`global/AGENTS.md`](global/AGENTS.md) | Shared global agent instructions linked into tool-specific locations. |
+| [`mise.toml`](mise.toml) | Mise-managed tools, dotfiles, bootstrap behavior, and operational tasks. |
 | [`pi-extensions/`](pi-extensions/) | Independently installable pi extension packages. |
-| [`setup.py`](setup.py) | Helper for links, health checks, prompt templates, skills, and pi extension operations. |
 | [`skills/`](skills/) | Repo-managed Agent Skills, linked into `~/.agents/skills/`. |
 
 ## Agent Skills
 
 | Skill | What it adds | When to use |
 | --- | --- | --- |
+| [`gh-stack`](skills/gh-stack/) | GitHub CLI workflows for stacked branches and dependent pull requests. | Creating, updating, rebasing, navigating, or publishing a stack of reviewable PRs. |
 | [`obsidian-cli`](skills/obsidian-cli/) | Obsidian vault workflows using the local `obsidian` CLI when its index/app state helps, and direct Markdown edits when plain file tools are better. | Notes, vaults, daily notes, tasks, links, tags, properties, bases, bookmarks, plugins, themes, sync, workspace state, or the `obsidian` command. |
 | [`sentry-cli`](skills/sentry-cli/) | Sentry CLI workflows for issues, events, projects, organizations, API calls, and authentication. | Viewing issues, events, projects, organizations, making Sentry API calls, or authenticating with Sentry via CLI. |
 
 Store skills as `skills/<skill-name>/SKILL.md`; the repo copy is the source of truth and local agents consume symlinked directories under `~/.agents/skills/`.
 
-Use [`docs/setup-guide.md`](docs/setup-guide.md#2-agent-skills-management) for the operational workflow: importing skills with `gh skill`, updating GitHub-sourced skills, validating them with `setup.py`, and linking them into the user-level skills directory. [`skills/README.md`](skills/README.md) keeps the shorter format and layout notes.
+Use [`docs/setup-guide.md`](docs/setup-guide.md#2-agent-skills-management) for the operational workflow: importing skills with `gh skill`, updating GitHub-sourced skills, validating them with `skill-validator`, and applying the user-level links with Mise. [`skills/README.md`](skills/README.md) keeps the shorter format and layout notes.
 
 ## Pi Prompt Templates
 
@@ -46,34 +47,31 @@ Each package is self-contained and can be installed directly from a local clone.
 ## Common Operations
 
 ```bash
-# Inspect available items
-python3 setup.py list
-python3 setup.py skills list
-python3 setup.py prompts list
+# Preview or apply the complete machine setup
+mise bootstrap --dry-run
+mise bootstrap --yes
+
+# Inspect or apply only repo-managed links
+mise bootstrap dotfiles status --missing
+mise bootstrap dotfiles apply --dry-run --verbose
+mise bootstrap dotfiles apply --yes
 
 # Import/update third-party skills into this repo's ./skills source tree
 gh skill install OWNER/REPO SKILL_OR_PATH --dir skills --force
 mise run skills-updates-check
 mise run skills-update
 
-# Link repo-managed files into user-level locations
-python3 setup.py link
-python3 setup.py skills link
-python3 setup.py prompts link
-
-# Check link and install health
-python3 setup.py health
-python3 setup.py skills health
-python3 setup.py prompts health
-python3 setup.py extensions health --scope both
-(cd pi-extensions && npm run validate:latest)
+# Validate skills and inspect pi package state
+mise run skills-health
+mise run pi-extensions-health
+mise run pi-extensions-validate
 
 # Install all pi extension packages
-python3 setup.py extensions install --scope global
-python3 setup.py extensions install --scope local
+mise run pi-extensions-install
+mise run pi-extensions-install-local
 ```
 
-Equivalent shortcuts are available in [`mise.toml`](mise.toml), for example `mise run skills-health`.
+`mise bootstrap` installs the declared tools, applies dotfiles, and then installs the repo-managed pi extensions globally. Project-local pi installation remains opt-in.
 
 To install one pi extension package manually:
 

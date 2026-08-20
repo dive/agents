@@ -10,17 +10,17 @@ Keep `README.md` up to date when adding, removing, or changing a skill, prompt t
 
 Run the narrow check for the area you changed:
 
-- Global links: `python3 setup.py health`
-- Skills: `python3 setup.py skills health --strict`
-- Prompt templates: `python3 setup.py prompts health --strict`
-- Pi extensions: `python3 setup.py extensions health --scope both`
+- Global links: `mise bootstrap dotfiles status --missing`
+- Skills: `mise run skills-health`
+- Prompt templates: `mise bootstrap dotfiles status --missing ~/.pi/agent/prompts/review.md`
+- Pi extension installation: `mise run pi-extensions-health`
 - TypeScript extensions: `cd pi-extensions && npm run typecheck`
 
-`mise run <task>` exposes the same workflows as shortcuts from `mise.toml`.
+`mise bootstrap` installs declared tools, applies dotfiles, and runs the final bootstrap task. `mise run <task>` exposes narrower operational workflows from `mise.toml`.
 
 ## Coding Style & Naming Conventions
 
-Use small, focused changes and keep generated links out of commits. Python in `setup.py` uses 4-space indentation, type hints, dataclasses, and explicit `Path` handling. TypeScript pi extensions should stay self-contained inside their package directories. Skill names must be lowercase kebab-case and match their directory names, for example `skills/obsidian-cli/SKILL.md`. Markdown should be concise and use fenced code block languages.
+Use small, focused changes and keep generated links out of commits. Keep `mise.toml` declarations explicit and conservative. TypeScript pi extensions should stay self-contained inside their package directories. Skill names must be lowercase kebab-case and match their directory names, for example `skills/obsidian-cli/SKILL.md`. Markdown should be concise and use fenced code block languages.
 
 ## Testing Guidelines
 
@@ -32,4 +32,4 @@ Recent history uses conventional-style summaries such as `fix: ...`, `docs: ...`
 
 ## Security & Configuration Tips
 
-Do not commit user-local symlinks, secrets, vault contents, or machine-specific settings. `setup.py` is intentionally conservative and refuses to replace regular files; preserve that behavior when editing setup flows.
+Do not commit user-local symlinks, secrets, vault contents, or machine-specific settings. Mise dotfiles intentionally refuse to replace conflicting regular files by default; do not use `--force` in setup tasks.
