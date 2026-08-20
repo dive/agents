@@ -51,7 +51,7 @@ fi
 mise run skills-health
 """
 
-[tasks.pi-extensions-health]
+[tasks.pi-extensions-list]
 description = "List installed pi extensions"
 run = "pi list"
 

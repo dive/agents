@@ -94,7 +94,7 @@ The repo-managed packages live under `pi-extensions/packages/`. The root `pi-ext
 
 ```bash
 # Show user and project packages known to pi.
-mise run pi-extensions-health
+mise run pi-extensions-list
 
 # Typecheck and smoke-load extensions against the latest Pi release.
 mise run pi-extensions-validate
@@ -143,7 +143,7 @@ mise run skills-health
 mise run skills-updates-check
 mise run skills-update
 
-mise run pi-extensions-health
+mise run pi-extensions-list
 mise run pi-extensions-validate
 mise run pi-extensions-install
 mise run pi-extensions-install-local

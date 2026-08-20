@@ -63,7 +63,7 @@ mise run skills-update
 
 # Validate skills and inspect pi package state
 mise run skills-health
-mise run pi-extensions-health
+mise run pi-extensions-list
 mise run pi-extensions-validate
 
 # Install all pi extension packages

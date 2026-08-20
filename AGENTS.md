@@ -13,7 +13,7 @@ Run the narrow check for the area you changed:
 - Global links: `mise bootstrap dotfiles status --missing`
 - Skills: `mise run skills-health`
 - Prompt templates: `mise bootstrap dotfiles status --missing ~/.pi/agent/prompts/review.md`
-- Pi extension installation: `mise run pi-extensions-health`
+- Pi extension inventory: `mise run pi-extensions-list`
 - TypeScript extensions: `cd pi-extensions && npm run typecheck`
 
 `mise bootstrap` installs declared tools, applies dotfiles, and runs the final bootstrap task. `mise run <task>` exposes narrower operational workflows from `mise.toml`.
