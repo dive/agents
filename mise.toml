@@ -31,25 +31,54 @@ exit "$status"
 [tasks.skills-updates-check]
 description = "Preview gh skill updates for GitHub-sourced skills"
 run = """
-skills="$(for f in skills/*/SKILL.md; do grep -q 'github-repo:' "$f" && basename "$(dirname "$f")"; done)"
-if [ -z "$skills" ]; then
-  echo "No GitHub-sourced skills found."
-  exit 0
+skills="$(for f in skills/*/SKILL.md; do
+  name="$(basename "$(dirname "$f")")"
+  if grep -q 'github-repo:' "$f" && [ "$name" != sentry-cli ]; then
+    echo "$name"
+  fi
+done)"
+if [ -n "$skills" ]; then
+  gh skill update --dir skills --dry-run $skills
 fi
-gh skill update --dir skills --dry-run $skills
+
+local_sha="$(sed -n 's/^    github-tree-sha: //p' skills/sentry-cli/SKILL.md)"
+remote_sha="$(gh api 'repos/getsentry/cli/git/trees/main?recursive=1' --jq '.tree[] | select(.path == "packages/cli/plugins/sentry-cli/skills/sentry-cli") | .sha')"
+if [ "$local_sha" = "$remote_sha" ]; then
+  echo "✓ sentry-cli is up to date ($local_sha)"
+else
+  echo "! sentry-cli update available: $local_sha -> $remote_sha"
+fi
 """
 
 [tasks.skills-update]
 description = "Update GitHub-sourced Agent Skills in ./skills"
 run = """
-skills="$(for f in skills/*/SKILL.md; do grep -q 'github-repo:' "$f" && basename "$(dirname "$f")"; done)"
-if [ -z "$skills" ]; then
-  echo "No GitHub-sourced skills found."
-else
+skills="$(for f in skills/*/SKILL.md; do
+  name="$(basename "$(dirname "$f")")"
+  if grep -q 'github-repo:' "$f" && [ "$name" != sentry-cli ]; then
+    echo "$name"
+  fi
+done)"
+if [ -n "$skills" ]; then
   gh skill update --dir skills --all $skills
 fi
+mise run skills-sentry-refresh
 mise run skills-health
 """
+
+[tasks.skills-sentry-refresh]
+description = "Refresh the Sentry CLI skill from its exact path on main"
+run = '''
+gh skill install getsentry/cli 'packages/cli/plugins/sentry-cli/skills/sentry-cli@main' --dir skills --force
+node <<'NODE'
+const fs = require('node:fs')
+const path = 'skills/sentry-cli/SKILL.md'
+const source = fs.readFileSync(path, 'utf8')
+const staleLink = '\n\nSee [Exit Codes](/exit-codes/) for the complete reference.\n\n'
+const patched = source.replace(staleLink, '\n\n')
+if (patched !== source) fs.writeFileSync(path, patched)
+NODE
+'''
 
 [tasks.pi-extensions-list]
 description = "List installed pi extensions"

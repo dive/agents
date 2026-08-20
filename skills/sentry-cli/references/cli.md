@@ -1,6 +1,6 @@
 ---
 name: sentry-cli-cli
-version: 0.38.0
+version: 0.43.0-dev.0
 description: CLI-related commands
 requires:
   bins: ["sentry"]
@@ -10,6 +10,10 @@ requires:
 # CLI Commands
 
 CLI-related commands
+
+### `sentry cli completion <shell>`
+
+Print the shell completion script
 
 ### `sentry cli defaults <key value...>`
 
@@ -164,6 +168,7 @@ Update the Sentry CLI to the latest version
 - `--check - Check for updates without installing`
 - `--force - Force upgrade even if already on the latest version`
 - `--offline - Upgrade using only cached version info and patches (no network)`
+- `--no-agent-skills - Skip agent skill installation for AI coding assistants`
 - `--method <value> - Installation method to use (curl, brew, npm, pnpm, bun, yarn)`
 
 **Examples:**

@@ -73,6 +73,8 @@ mise run skills-updates-check
 mise run skills-update
 ```
 
+The Sentry CLI skill lives below a nested workspace plugin path that `gh skill update` cannot rediscover. The update tasks therefore compare its directory tree directly and refresh it through the exact path on `main`. The refresh also removes one upstream site-root link that is not valid inside a local Agent Skill package.
+
 After adding a skill, add its user-level target to `[dotfiles]` in `mise.toml`, update the skill inventory in `README.md`, validate it, and apply the new link.
 
 ## 3) Pi prompt template management
@@ -142,6 +144,7 @@ mise tasks ls
 mise run skills-health
 mise run skills-updates-check
 mise run skills-update
+mise run skills-sentry-refresh
 
 mise run pi-extensions-list
 mise run pi-extensions-validate

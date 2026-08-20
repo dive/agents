@@ -1,16 +1,16 @@
 ---
 description: Guide for using the Sentry CLI to interact with Sentry from the command line. Use when the user asks about viewing issues, events, projects, organizations, making API calls, or authenticating with Sentry via CLI.
 metadata:
-    github-path: plugins/sentry-cli/skills/sentry-cli
-    github-ref: refs/tags/0.38.0
+    github-path: packages/cli/plugins/sentry-cli/skills/sentry-cli
+    github-ref: refs/heads/main
     github-repo: https://github.com/getsentry/cli
-    github-tree-sha: 9b0c253b755c7ded146d527865d4911ab5b218f9
+    github-tree-sha: a247f4204880c3573b7651c1a9fc77474649bd52
 name: sentry-cli
 requires:
     auth: true
     bins:
         - sentry
-version: 0.38.0
+version: 0.43.0-dev.0
 ---
 # Sentry CLI Usage Guide
 
@@ -73,14 +73,33 @@ The CLI uses semantic exit codes. Key ranges for agents:
 # 1. Find the issue (auto-detects org/project from DSN or config)
 sentry issue list --query "is:unresolved" --limit 5
 
-# 2. Get details
-sentry issue view PROJECT-123
+# 2. Get details. For agents, prefer --json — it includes the full issue plus
+# the latest event under `event`, so you get everything in one call.
+sentry issue view PROJECT-123 --json
 
 # 3. Get AI root cause analysis
 sentry issue explain PROJECT-123
 
 # 4. Get a fix plan
 sentry issue plan PROJECT-123
+```
+
+`sentry issue view <SHORT-ID> --json` is the fastest way to get an agent up to
+speed on an issue. Select just the fields you need with `--fields` instead of
+consuming the whole payload — the latest event's `request` entry can carry live
+session data (cookies, headers, body), so extract named fields rather than
+dumping the entire object:
+
+```bash
+# Top-level issue fields
+sentry issue view PROJECT-123 --json --fields shortId,title,culprit,count,userCount,permalink
+
+# Named fields from the latest event — avoids pulling the full request/session blob
+sentry issue view PROJECT-123 --json --fields event.id,event.title,event.dateCreated
+
+# Just the request URL and method (not the whole request entry). Event data
+# lives under event.entries[], each tagged with a `type` and `data` payload.
+sentry issue view PROJECT-123 --json | jq '.event.entries[] | select(.type == "request") | .data | {url, method}'
 ```
 
 #### Explore Traces and Performance
@@ -202,7 +221,7 @@ Display types with default sizes:
 
 Use **common** types for general dashboards. Use **specialized** only when specifically requested. Avoid **internal** types unless the user explicitly asks.
 
-Available datasets: `spans` (default), `tracemetrics`, `discover`, `issue`, `error-events`, `logs`. Run `sentry dashboard widget --help` for dataset descriptions, query formats, and examples.
+Available datasets: `spans` (default), `errors`, `transactions`, `metrics`, `issue`, `logs`. Run `sentry dashboard widget --help` for dataset descriptions, query formats, and examples.
 
 **Row-filling examples:**
 
@@ -255,7 +274,7 @@ sentry span list my-org/my-project/abc123def456...
 
 #### Dataset names for the Events API
 
-When querying the Events API (directly or via `sentry api`), valid dataset values are: `spans`, `transactions`, `logs`, `errors`, `discover`.
+When querying the Events API (directly or via `sentry api`), valid dataset values are: `spans`, `logs`, `errors`, `tracemetrics`, `profile_functions`, and `uptime_results`.
 
 ### Common Mistakes
 
@@ -287,8 +306,8 @@ npm install -g sentry
 ### Authentication
 
 ```bash
-sentry auth login
-sentry auth login --token YOUR_SENTRY_API_TOKEN
+sentry auth
+sentry auth --token YOUR_SENTRY_API_TOKEN
 sentry auth status
 sentry auth logout
 ```
@@ -301,7 +320,7 @@ Authenticate with Sentry
 
 - `sentry auth login` — Authenticate with Sentry
 - `sentry auth logout` — Log out of Sentry
-- `sentry auth refresh` — Refresh your authentication token
+- `sentry auth refresh` — Refresh your OAuth access token
 - `sentry auth status` — View authentication status
 - `sentry auth token` — Print the stored authentication token
 - `sentry auth whoami` — Show the currently authenticated identity
@@ -321,7 +340,7 @@ Work with Sentry organizations
 
 Work with Sentry projects
 
-- `sentry project create <name> <platform>` — Create a new project
+- `sentry project create [<org>/]<name>:<platform>...` — Create one or more projects
 - `sentry project delete <org/project>` — Delete a project
 - `sentry project list <org/project>` — List projects
 - `sentry project view <org/project>` — View details of a project
@@ -379,10 +398,20 @@ Manage Sentry alert rules
 
 → Full flags and examples: `references/alert.md`
 
+### Build
+
+Manage mobile build artifacts
+
+- `sentry build upload <path...>` — Upload builds to a project
+- `sentry build download <build-id>` — Download a build artifact
+
+→ Full flags and examples: `references/build.md`
+
 ### CLI
 
 CLI-related commands
 
+- `sentry cli completion <shell>` — Print the shell completion script
 - `sentry cli defaults <key value...>` — View and manage default settings
 - `sentry cli feedback <message...>` — Send feedback about the CLI
 - `sentry cli fix` — Diagnose and repair CLI database issues
@@ -401,6 +430,15 @@ Manage code mappings for stack trace linking
 
 → Full flags and examples: `references/code-mappings.md`
 
+### Conversation
+
+List and view AI conversations
+
+- `sentry conversation list <org>` — List recent AI conversations
+- `sentry conversation view <org/conversation-id>` — View an AI conversation transcript
+
+→ Full flags and examples: `references/conversation.md`
+
 ### Dart-symbol-map
 
 Work with Dart/Flutter symbol maps
@@ -414,8 +452,11 @@ Work with Dart/Flutter symbol maps
 Work with debug information files
 
 - `sentry debug-files check <path>` — Inspect a debug information file
-- `sentry debug-files bundle-jvm <path>` — Create a JVM source bundle for source context
+- `sentry debug-files find <id...>` — Locate debug files for given debug identifiers
+- `sentry debug-files upload <path...>` — Upload debug information files to Sentry
+- `sentry debug-files print-sources <path>` — List the source files a debug file references
 - `sentry debug-files bundle-sources <path>` — Bundle a debug file's source files for source context
+- `sentry debug-files bundle-jvm <path>` — Create a JVM source bundle for source context
 
 → Full flags and examples: `references/debug-files.md`
 
@@ -434,6 +475,14 @@ Manage Sentry dashboards
 
 → Full flags and examples: `references/dashboard.md`
 
+### Platform
+
+List valid Sentry platform identifiers
+
+- `sentry platform list` — List all valid Sentry platform identifiers
+
+→ Full flags and examples: `references/platform.md`
+
 ### Proguard
 
 Work with ProGuard/R8 mapping files
@@ -442,6 +491,15 @@ Work with ProGuard/R8 mapping files
 - `sentry proguard uuid <path>` — Compute the UUID for a ProGuard mapping file
 
 → Full flags and examples: `references/proguard.md`
+
+### React-native
+
+Upload React Native sourcemaps from build steps
+
+- `sentry react-native gradle` — Upload a React Native bundle + sourcemap (Gradle build step)
+- `sentry react-native xcode <script-arg...>` — Upload React Native sourcemaps (Xcode build step)
+
+→ Full flags and examples: `references/react-native.md`
 
 ### Replay
 
@@ -494,6 +552,15 @@ Query aggregate event data (Explore)
 
 → Full flags and examples: `references/explore.md`
 
+### Feedback
+
+Search and inspect User Feedback
+
+- `sentry feedback list <org/project>` — List and search User Feedback
+- `sentry feedback view <feedback>` — View a User Feedback item
+
+→ Full flags and examples: `references/feedback.md`
+
 ### Log
 
 View Sentry logs
@@ -511,6 +578,16 @@ Work with Sentry cron monitors
 - `sentry monitor list <org/project>` — List cron monitors
 
 → Full flags and examples: `references/monitor.md`
+
+### Snapshots
+
+Manage and compare snapshots
+
+- `sentry snapshots diff <base-dir> <head-dir>` — Compare two directories of snapshot images
+- `sentry snapshots download` — Download baseline snapshot images
+- `sentry snapshots upload <path>` — Upload snapshots to a project
+
+→ Full flags and examples: `references/snapshots.md`
 
 ### Sourcemap
 
@@ -557,6 +634,14 @@ Initialize Sentry in your project (experimental)
 - `sentry init <target> <directory>` — Initialize Sentry in your project (experimental)
 
 → Full flags and examples: `references/init.md`
+
+### Info
+
+Print configuration and verify authentication
+
+- `sentry info` — Print configuration and verify authentication
+
+→ Full flags and examples: `references/info.md`
 
 ### Local
 
