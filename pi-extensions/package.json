@@ -18,7 +18,7 @@
     "validate:latest": "node ./scripts/assert-latest-pi.mjs && npm run validate"
   },
   "devDependencies": {
-    "@earendil-works/pi-coding-agent": "^0.84.1",
+    "@earendil-works/pi-coding-agent": "^0.84.2",
     "@types/node": "^24.7.2",
     "typescript": "^5.9.3"
   },
