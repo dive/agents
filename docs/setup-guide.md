@@ -3,6 +3,7 @@
 This repository uses Mise for its tools, user-level links, bootstrap flow, and operational tasks. The setup covers:
 
 - `global/AGENTS.md` links for supported coding agents
+- public Amp plugins under `amp-plugins/` linked into `~/.config/amp/plugins/`
 - Agent Skills under `skills/` linked into `~/.agents/skills/`
 - pi prompt templates linked into `~/.pi/agent/prompts/`
 - repo-managed pi extension packages
@@ -42,7 +43,7 @@ mise bootstrap dotfiles apply --yes ~/.config/amp/AGENTS.md
 
 Mise repoints stale symlinks but refuses to replace conflicting regular files or directories by default. Do not add `--force` to repository tasks. If a managed declaration is being removed and its target should also be removed, run `mise bootstrap dotfiles unapply <target>` before deleting the entry.
 
-Adding or removing a skill, prompt template, or global instruction target requires updating the corresponding `[dotfiles]` entry in `mise.toml`.
+Adding or removing an Amp plugin, skill, prompt template, or global instruction target requires updating the corresponding `[dotfiles]` entry in `mise.toml`.
 
 ## 2) Agent Skills management
 
@@ -77,7 +78,25 @@ The Sentry CLI skill lives below a nested workspace plugin path that `gh skill u
 
 After adding a skill, add its user-level target to `[dotfiles]` in `mise.toml`, update the skill inventory in `README.md`, validate it, and apply the new link.
 
-## 3) Pi prompt template management
+## 3) Amp plugin management
+
+Store public single-file Amp plugins under `amp-plugins/`. The repo copy is the source of truth for local development, and Mise links each plugin into `~/.config/amp/plugins/`:
+
+```bash
+mise bootstrap dotfiles status --missing ~/.config/amp/plugins/caffeinate.ts
+mise bootstrap dotfiles apply --yes ~/.config/amp/plugins/caffeinate.ts
+```
+
+Reload plugins from Amp's command palette after installation or local edits. Once a plugin is published to this repository's `main` branch, other users can install a URL-tracked copy:
+
+```bash
+amp plugins add --auto-update \
+  https://raw.githubusercontent.com/dive/agents/main/amp-plugins/caffeinate.ts
+```
+
+Those installations update automatically when Amp loads plugins. Run `amp plugins update caffeinate` to fetch an update immediately. The repo-managed local link instead updates with this Git checkout and must not be combined with a URL-installed copy.
+
+## 4) Pi prompt template management
 
 Store each prompt as a direct Markdown file under `destroot/pi/agent/prompts/`. Each template has an explicit `[dotfiles]` entry targeting `~/.pi/agent/prompts/<name>.md`.
 
@@ -88,7 +107,7 @@ mise bootstrap dotfiles apply --yes ~/.pi/agent/prompts/review.md
 
 When adding or removing a prompt, update `mise.toml` and the prompt inventory in `README.md` alongside the source file.
 
-## 4) Pi extension package management
+## 5) Pi extension package management
 
 The repo-managed packages live under `pi-extensions/packages/`. The root `pi-extensions/package.json` manifest aggregates their entrypoints, so the install and uninstall tasks manage the workspace as one pi package.
 
@@ -136,7 +155,7 @@ pi remove -l ./pi-extensions/packages/pi-ghostty
 
 Preview a task without executing it with `mise run --dry-run <task>`. When adding or removing an extension package, update the root `pi.extensions` manifest and the extension inventory in `README.md`.
 
-## 5) Task inventory
+## 6) Task inventory
 
 ```bash
 mise tasks ls

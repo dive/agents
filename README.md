@@ -1,12 +1,13 @@
 # agents
 
-Utilities, shared instructions, skills, prompts, and local extension packages for coding agents, focused on [`pi`](https://github.com/badlogic/pi-mono) and Ghostty.
+Utilities, shared instructions, skills, prompts, plugins, and local extension packages for coding agents, focused on [Amp](https://ampcode.com), [`pi`](https://github.com/badlogic/pi-mono), and Ghostty.
 
 ## Repository Map
 
 | Path | Purpose |
 | --- | --- |
 | [`AGENTS.md`](AGENTS.md) | Contributor guide for working in this repository. |
+| [`amp-plugins/`](amp-plugins/) | Public single-file Amp plugins, linked locally into `~/.config/amp/plugins/`. |
 | [`destroot/pi/agent/prompts/`](destroot/pi/agent/prompts/) | Repo-managed pi prompt templates, linked into `~/.pi/agent/prompts/`. |
 | [`docs/`](docs/) | Setup and operational documentation. |
 | [`global/AGENTS.md`](global/AGENTS.md) | Shared global agent instructions linked into tool-specific locations. |
@@ -25,6 +26,21 @@ Utilities, shared instructions, skills, prompts, and local extension packages fo
 Store skills as `skills/<skill-name>/SKILL.md`; the repo copy is the source of truth and local agents consume symlinked directories under `~/.agents/skills/`.
 
 Use [`docs/setup-guide.md`](docs/setup-guide.md#2-agent-skills-management) for the operational workflow: importing skills with `gh skill`, updating GitHub-sourced skills, validating them with `skill-validator`, and applying the user-level links with Mise. [`skills/README.md`](skills/README.md) keeps the shorter format and layout notes.
+
+## Amp Plugins
+
+| Plugin | What it adds |
+| --- | --- |
+| [`caffeinate`](amp-plugins/caffeinate.ts) | Prevents macOS idle system sleep while interactive Amp agent turns are active. |
+
+The local Mise setup links repo-managed plugins into `~/.config/amp/plugins/`. Other users can install the public plugin with automatic updates after it is published to `main`:
+
+```bash
+amp plugins add --auto-update \
+  https://raw.githubusercontent.com/dive/agents/main/amp-plugins/caffeinate.ts
+```
+
+Run `amp plugins update caffeinate` to fetch a published update immediately, then reload plugins in Amp.
 
 ## Pi Prompt Templates
 
@@ -55,6 +71,9 @@ mise bootstrap --yes
 mise bootstrap dotfiles status --missing
 mise bootstrap dotfiles apply --dry-run --verbose
 mise bootstrap dotfiles apply --yes
+
+# Apply only the local Amp plugin link
+mise bootstrap dotfiles apply --yes ~/.config/amp/plugins/caffeinate.ts
 
 # Import/update third-party skills into this repo's ./skills source tree
 gh skill install OWNER/REPO SKILL_OR_PATH --dir skills --force
